@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+*.app
+build/
+dist/
+dist2/
+
+# Metro
+.metro-health-check*
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
+*.pem
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Expo
+.expo/
+web-build/
+
+# Android
+android/app/build/
+android/.gradle/
+android/build/
+
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+
+# Firebase
+functions/lib/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Memory & logs
+memory/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OpenClaw (local workspace config)
+.agents/
+.clawhub/
+.openclaw/

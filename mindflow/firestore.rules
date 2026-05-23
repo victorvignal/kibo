@@ -1,0 +1,206 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ────────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+
+    function isPsychologist() {
+      return isAuthenticated() && getUserRole(request.auth.uid) == 'psychologist';
+    }
+
+    function isPsychologistWithAccess(patientId) {
+      // Works for self-registered patients (patientId == auth.uid) and psychologist-created (docId in patientIds)
+      return isAuthenticated() &&
+        getUserRole(request.auth.uid) == 'psychologist' &&
+        patientId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.patientIds;
+    }
+
+    function hasPatientAccess(patientId) {
+      return isOwner(patientId) || isPsychologistWithAccess(patientId);
+    }
+
+    // ─── Users collection ───────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      // Users can read their own profile; psychologists can read their patients' profiles
+      allow read: if isOwner(userId) || isPsychologistWithAccess(userId);
+
+      // Users can update their own profile (except role and patientIds)
+      allow update: if isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'patientIds']);
+
+      // Users create their own profile document (Firebase Auth UID must match doc ID)
+      allow create: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        request.resource.data.role in ['patient', 'psychologist'];
+
+      // Only psychologists can append to their patientIds array
+      allow update: if isPsychologist() &&
+        request.auth.uid == userId &&
+        request.resource.data.patientIds.size() > resource.data.patientIds.size();
+    }
+
+    // ─── Check-ins collection ───────────────────────────────────────────────────
+
+    match /checkins/{checkinId} {
+      // Patients and their psychologists can read
+      allow read: if hasPatientAccess(resource.data.patientId);
+
+      // Patients create their own check-ins with validated data
+      allow create: if isOwner(request.resource.data.patientId) &&
+        request.resource.data.mood is int && request.resource.data.mood >= 1 && request.resource.data.mood <= 10 &&
+        request.resource.data.sleep is int && request.resource.data.sleep >= 1 && request.resource.data.sleep <= 10 &&
+        request.resource.data.anxiety is int && request.resource.data.anxiety >= 1 && request.resource.data.anxiety <= 10;
+
+      // Patients can update/delete their own check-ins
+      allow update, delete: if isOwner(resource.data.patientId);
+    }
+
+    // ─── Messages collection ────────────────────────────────────────────────────
+
+    match /messages/{messageId} {
+      // Patients and their psychologists can read
+      allow read: if hasPatientAccess(resource.data.patientId);
+
+      // Patients create their own messages
+      allow create: if isOwner(request.resource.data.patientId) &&
+        request.resource.data.role in ['user', 'assistant'] &&
+        request.resource.data.content is string &&
+        request.resource.data.content.size() <= 2000;
+
+      // Messages are immutable
+      allow update, delete: if false;
+    }
+
+    // ─── Sensor data collection ─────────────────────────────────────────────────
+
+    match /sensorData/{dataId} {
+      // Patients and their psychologists can read
+      allow read: if hasPatientAccess(resource.data.patientId);
+
+      // Patients create their own sensor batches
+      allow create: if isOwner(request.resource.data.patientId) &&
+        request.resource.data.type == 'sensor_batch' &&
+        request.resource.data.count is int &&
+        request.resource.data.count > 0 &&
+        request.resource.data.count <= 1000;
+
+      // Patients can delete their own data (buffer cleanup)
+      allow delete: if isOwner(resource.data.patientId);
+
+      // Sensor data is immutable once written
+      allow update: if false;
+    }
+
+    // ─── Journal entries ────────────────────────────────────────────────────────
+
+    match /journal/{entryId} {
+      // Patients and their psychologists can read
+      allow read: if hasPatientAccess(resource.data.userId);
+
+      // Patients create their own journal entries
+      allow create: if isOwner(request.resource.data.userId);
+
+      // Patients can update/delete their own entries
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // ─── Patients collection (created by psychologists via mindflow web) ──────────
+
+    match /patients/{patientId} {
+      // Patients can read their own record
+      allow read: if isOwner(patientId);
+
+      // Psychologists can manage their own patient records
+      allow read: if isPsychologistWithAccess(patientId);
+      allow create: if isPsychologistWithAccess(patientId);
+      allow update: if isPsychologistWithAccess(patientId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['therapistId']);
+
+      // Patients can update limited fields of their own record
+      allow update: if isOwner(patientId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['therapistId', 'name', 'email']);
+    }
+
+    // ─── Alerts collection ───────────────────────────────────────────────────────
+
+    match /alerts/{alertId} {
+      // Patients can read their own alerts
+      allow read: if isOwner(resource.data.patientId);
+
+      // Psychologists can read their patients' alerts
+      allow read: if isPsychologistWithAccess(resource.data.patientId);
+
+      // Psychologists can acknowledge alerts (only acknowledge/acknowledgedAt fields)
+      allow update: if isPsychologistWithAccess(resource.data.patientId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acknowledged', 'acknowledgedAt']);
+    }
+
+    // ─── Daily data aggregation (written by Cloud Functions) ─────────────────────
+
+    match /dailyData/{dataId} {
+      allow read: if hasPatientAccess(resource.data.patientId);
+      allow write: if false; // Cloud Functions only (service account)
+    }
+
+    // ─── User profile subcollection ─────────────────────────────────────────────
+
+    match /users/{userId}/profile/{profileDoc} {
+      allow read, write: if isOwner(userId);
+      allow read: if isPsychologistWithAccess(userId);
+    }
+
+    // ─── Notification tokens ───────────────────────────────────────────────────
+
+    match /notificationTokens/{tokenId} {
+      allow read, write: if isOwner(tokenId);
+    }
+
+    // ─── Linking codes (for therapist-patient connection) ──────────────────────────
+
+    match /linkingCodes/{codeId} {
+      // Anyone can read linking codes (patients need to look them up by code)
+      allow read: if true;
+      
+      // Authenticated users can create linking codes (psychologists)
+      allow create: if isAuthenticated();
+      
+      // Users can mark a code as used (patient linking)
+      allow update: if isAuthenticated() && 
+        request.resource.data.used == true &&
+        !resource.data.used;
+      
+      // Psychologists can delete their own unused codes (revoke)
+      allow delete: if isAuthenticated() && 
+        resource.data.psychologistId == request.auth.uid &&
+        !resource.data.used;
+    }
+
+    // ─── Goals ────────────────────────────────────────────────────────────────
+
+    match /goals/{goalId} {
+      allow read: if hasPatientAccess(resource.data.patientId);
+      allow create: if isOwner(request.resource.data.patientId);
+      allow update, delete: if isOwner(resource.data.patientId);
+    }
+
+    // ─── Fallback: deny everything else ─────────────────────────────────────────
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

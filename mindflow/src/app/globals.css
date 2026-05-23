@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/* Kibo Brand Colors - Baseado no gato Persa cinza/branco com olhos dourados */
+:root {
+  /* Primary - Roxo elegante */
+  --color-primary: #7C3AED;
+  --color-primary-light: #A78BFA;
+  --color-primary-dark: #5B21B6;
+  --color-primary-foreground: #FFFFFF;
+  
+  /* Secondary - Cinza escuro (pelagem) */
+  --color-secondary: #1F2937;
+  --color-secondary-light: #374151;
+  --color-secondary-foreground: #F9FAFB;
+  
+  /* Accent - Dourado (olhos do gato) */
+  --color-accent: #F59E0B;
+  --color-accent-light: #FCD34D;
+  --color-accent-dark: #D97706;
+  
+  /* Backgrounds */
+  --color-background: #FAFAFA;
+  --color-foreground: #111827;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #111827;
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
+  --color-border: #E5E7EB;
+  
+  /* Semantic */
+  --color-destructive: #DC2626;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #059669;
+  --color-warning: #D97706;
+  
+  /* Components */
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #111827;
+  --color-ring: #7C3AED;
+  
+  /* Radius */
+  --radius: 0.75rem;
+}
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-foreground: var(--color-primary-foreground);
+  
+  --color-secondary: var(--color-secondary);
+  --color-secondary-light: var(--color-secondary-light);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  
+  --color-accent: var(--color-accent);
+  --color-accent-light: var(--color-accent-light);
+  --color-accent-dark: var(--color-accent-dark);
+  
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-card: var(--color-card);
+  --color-card-foreground: var(--color-card-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-border: var(--color-border);
+  
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  
+  --color-popover: var(--color-popover);
+  --color-popover-foreground: var(--color-popover-foreground);
+  
+  --color-ring: var(--color-ring);
+  
+  --radius: var(--radius);
+}
+
+/* Force light mode only for now */
+* {
+  color-scheme: light;
+}
+
+body {
+  background-color: #FAFAFA;
+  color: #111827;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #A78BFA;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7C3AED;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #7C3AED 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 50%, #1F2937 100%);
+}
+
+.gradient-bg-soft {
+  background: linear-gradient(135deg, #EDE9FE 0%, #FEF3C7 100%);
+}
+
+/* Shadows */
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
+}
+
+.shadow-glow-accent {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(124, 58, 237, 0.2);
+}

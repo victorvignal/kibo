@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Kibo",
+    "slug": "KiboMobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7C3AED"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kibo.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Kibo uses your location to track activity patterns and provide personalized wellness insights.",
+        "NSMotionUsageDescription": "Kibo uses motion data to track your physical activity level.",
+        "NSFaceIDUsageDescription": "Kibo uses Face ID to securely authenticate you and protect your mental health data."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#7C3AED"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.kibo.mobile",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Kibo uses your location to track activity patterns and provide personalized wellness insights."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7C3AED",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Kibo uses Face ID to securely authenticate you."
+        }
+      ]
+    ]
+  }
+}
