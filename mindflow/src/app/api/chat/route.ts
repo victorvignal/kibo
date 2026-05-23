@@ -98,6 +98,29 @@ Regras absoluta:
   return prompt;
 }
 
+/** Strip any thinking/reasoning content that leaked into the model response */
+function cleanResponse(text: string): string {
+  return text
+    // Remove thinking blocks (various formats)
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/\[Think\][\s\S]*?\[\/Think\]/gi, '')
+    .replace(/Thinking:[\s\S]*?(?=\n\n|\n[A-Z]|$)/gi, '')
+    // Remove "Drafting P2 (Validation & Cat metaphor)*:" style prefixes
+    .replace(/Drafting P\d[^:]*:[^]*/gi, '')
+    .replace(/^Validation[^]*$/gm, '')
+    // Remove lines starting with P1, P2, etc (planning/thinking markers)
+    .replace(/^P\d+[^]*$/gm, '')
+    // Remove asterisk-wrapped reasoning
+    .replace(/\*Reasoning[^"]*?\*/gi, '')
+    // Clean up any remaining thought markers
+    .replace(/^\s*\[.*?\]\s*/gm, '')
+    // Remove lines that are clearly internal notes
+    .replace(/^[^]*?(?:internal|reasoning|thinking|thought)[^]*$/gim, '')
+    // Collapse multiple blank lines
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as ChatRequest;
@@ -179,7 +202,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const reply = data.choices?.[0]?.message?.content || 'Desculpe, tive um problema ao processar sua mensagem. Tente novamente. 💜';
+    const rawReply = data.choices?.[0]?.message?.content || 'Desculpe, tive um problema ao processar sua mensagem. Tente novamente. 💜';
+    const reply = cleanResponse(rawReply);
 
     // Use NextResponse.json with explicit UTF-8 charset for proper Portuguese character handling
     const jsonBody = JSON.stringify({ reply, type: 'chat' });
