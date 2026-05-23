@@ -2,14 +2,23 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 const QUICK_ACTIONS = [
-  { emoji: '📋', label: 'Fazer Check-in', screen: 'Checkin' },
-  { emoji: '💬', label: 'Conversar com Kibo', screen: 'Chat' },
-  { emoji: '🌬️', label: 'Respirar', screen: 'BreathingExercise' },
-  { emoji: '🎯', label: 'Metas', screen: 'Goals' },
-  { emoji: '📈', label: 'Atividade', screen: 'ActivityData' },
-  { emoji: '⌚', label: 'Wearables', screen: 'WearableData' },
-  { emoji: '📓', label: 'Diário', screen: 'Journal' },
+  { emoji: '📋', label: 'Check-in', screen: 'Checkin', color: '#7C3AED' },
+  { emoji: '💬', label: 'Kibo Chat', screen: 'Chat', color: '#10B981' },
+  { emoji: '🌬️', label: 'Respirar', screen: 'BreathingExercise', color: '#3B82F6' },
+  { emoji: '🎯', label: 'Metas', screen: 'Goals', color: '#F59E0B' },
+  { emoji: '📊', label: 'Insights', screen: 'Insights', color: '#EC4899' },
+  { emoji: '📓', label: 'Diário', screen: 'Journal', color: '#8B5CF6' },
+  { emoji: '🆘', label: 'Ajuda', screen: 'Crisis', color: '#EF4444' },
+  { emoji: '📈', label: 'Atividade', screen: 'ActivityData', color: '#06B6D4' },
+  { emoji: '⌚', label: 'Wearables', screen: 'WearableData', color: '#84CC16' },
 ];
+
+interface QuickAction {
+  emoji: string;
+  label: string;
+  screen: string;
+  color: string;
+}
 
 interface QuickActionsGridProps {
   onNavigate: (screen: string) => void;
@@ -18,12 +27,12 @@ interface QuickActionsGridProps {
 export default function QuickActionsGrid({ onNavigate }: QuickActionsGridProps) {
   return (
     <>
-      <Text style={styles.sectionTitle}>Ações rápidas</Text>
+      <Text style={styles.sectionTitle}>Explorar</Text>
       <View style={styles.grid}>
-        {QUICK_ACTIONS.map((action) => (
+        {QUICK_ACTIONS.map((action: QuickAction) => (
           <TouchableOpacity
             key={action.label}
-            style={styles.card}
+            style={[styles.card, { borderLeftWidth: 3, borderLeftColor: action.color }]}
             onPress={() => onNavigate(action.screen)}
             activeOpacity={0.7}
           >
@@ -55,9 +64,11 @@ const styles = StyleSheet.create({
     width: '47%',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -65,12 +76,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   emoji: {
-    fontSize: 28,
+    fontSize: 24,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#111827',
-    textAlign: 'center',
+    color: '#374151',
+    flex: 1,
   },
 });

@@ -23,23 +23,49 @@ import { onAuthChange } from '../services/firebase';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-function TabIcon({ name, focused }: { name: string; focused: boolean }) {
-  const icons: Record<string, string> = {
-    Home: '🏠',
-    Chat: '💬',
-    Checkin: '📋',
-    Profile: '👤',
-    Goals: '🎯',
-    Insights: '📊',
-    Journal: '📓',
-    Crisis: '🆘',
-    ActivityData: '📈',
-    WearableData: '⌚',
+// Minimal tab icon component using simple shapes + color
+function TabBarIcon({ label, focused }: { label: string; focused: boolean }) {
+  const color = focused ? '#7C3AED' : '#9CA3AF';
+  const size = focused ? 28 : 24;
+
+  const icons: Record<string, () => React.ReactNode> = {
+    Home: () => (
+      <View style={[styles.iconContainer, { width: size, height: size }]}>
+        <View style={[styles.homeIcon, { borderColor: color }]}>
+          <View style={[styles.homeRoof, { borderBottomColor: color }]} />
+        </View>
+      </View>
+    ),
+    Chat: () => (
+      <View style={[styles.iconContainer, { width: size, height: size }]}>
+        <View style={[styles.chatBubble, { backgroundColor: color }]}>
+          <View style={styles.chatDot} />
+          <View style={[styles.chatDot, { marginLeft: 2 }]} />
+          <View style={[styles.chatDot, { marginLeft: 2 }]} />
+        </View>
+      </View>
+    ),
+    Checkin: () => (
+      <View style={[styles.iconContainer, { width: size, height: size }]}>
+        <View style={[styles.checkIcon, { borderColor: color }]}>
+          <View style={[styles.checkLine1, { backgroundColor: color }]} />
+          <View style={[styles.checkLine2, { backgroundColor: color }]} />
+        </View>
+      </View>
+    ),
+    Profile: () => (
+      <View style={[styles.iconContainer, { width: size, height: size }]}>
+        <View style={[styles.profileIcon, { borderColor: color }]}>
+          <View style={[styles.profileHead, { backgroundColor: color }]} />
+          <View style={[styles.profileBody, { backgroundColor: color }]} />
+        </View>
+      </View>
+    ),
   };
 
   return (
     <View style={styles.tabIcon}>
-      <Text style={{ fontSize: focused ? 26 : 22 }}>{icons[name]}</Text>
+      {icons[label]?.()}
     </View>
   );
 }
@@ -49,40 +75,36 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused }) => (
-          <TabIcon name={route.name} focused={focused} />
+          <TabBarIcon label={route.name} focused={focused} />
         ),
         tabBarActiveTintColor: '#7C3AED',
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingTop: 8,
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+          height: 60,
           paddingBottom: 8,
-          height: 70,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
+          marginTop: 2,
         },
-        headerStyle: {
-          backgroundColor: '#7C3AED',
-        },
-        headerTintColor: '#FFFFFF',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerShown: false,
       })}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: 'Kibo' }}
+        options={{ title: 'Home' }}
       />
       <Tab.Screen
         name="Chat"
         component={ChatScreen}
-        options={{ title: 'Assistente Kibo' }}
+        options={{ title: 'Chat' }}
       />
       <Tab.Screen
         name="Checkin"
@@ -94,41 +116,6 @@ function MainTabs() {
         component={ProfileScreen}
         options={{ title: 'Perfil' }}
       />
-      <Tab.Screen
-        name="Goals"
-        component={GoalsScreen}
-        options={{ title: 'Metas' }}
-      />
-      <Tab.Screen
-        name="Insights"
-        component={InsightsScreen}
-        options={{ title: 'Insights' }}
-      />
-      <Tab.Screen
-        name="Journal"
-        component={JournalScreen}
-        options={{ title: 'Diário' }}
-      />
-      <Tab.Screen
-        name="Crisis"
-        component={CrisisScreen}
-        options={{ 
-          title: 'Ajuda',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name="Crisis" focused={focused} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ActivityData"
-        component={ActivityDataScreen}
-        options={{ title: 'Atividade' }}
-      />
-      <Tab.Screen
-        name="WearableData"
-        component={WearableDataScreen}
-        options={{ title: 'Wearables' }}
-      />
     </Tab.Navigator>
   );
 }
@@ -138,12 +125,10 @@ function RootNavigator() {
 
   useEffect(() => {
     const unsubscribe = onAuthChange((user) => {
-      // Small delay to avoid flash of wrong screen
       setTimeout(async () => {
         if (user) {
           setInitialRoute('Main');
         } else {
-          // Check if onboarding was completed
           try {
             const AsyncStorage = require('@react-native-async-storage/async-storage').default;
             const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
@@ -174,22 +159,24 @@ function RootNavigator() {
         initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen 
           name="BreathingExercise" 
-          component={BreathingExerciseScreen} 
-          options={{ headerShown: false }}
+          component={BreathingExerciseScreen}
         />
         <Stack.Screen 
           name="ColorCheckin" 
-          component={ColorCheckinScreen} 
-          options={{ 
-            headerShown: false,
-            presentation: 'modal',
-          }}
+          component={ColorCheckinScreen}
+          options={{ presentation: 'modal' }}
         />
+        <Stack.Screen name="Goals" component={GoalsScreen} />
+        <Stack.Screen name="Insights" component={InsightsScreen} />
+        <Stack.Screen name="Journal" component={JournalScreen} />
+        <Stack.Screen name="Crisis" component={CrisisScreen} />
+        <Stack.Screen name="ActivityData" component={ActivityDataScreen} />
+        <Stack.Screen name="WearableData" component={WearableDataScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -203,6 +190,99 @@ const styles = StyleSheet.create({
   tabIcon: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Home icon (house)
+  homeIcon: {
+    width: 20,
+    height: 16,
+    borderWidth: 2.5,
+    borderTopWidth: 0,
+    borderRadius: 2,
+    position: 'relative',
+  },
+  homeRoof: {
+    position: 'absolute',
+    top: -8,
+    left: -4,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 14,
+    borderRightWidth: 14,
+    borderBottomWidth: 10,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+  },
+  // Chat bubble
+  chatBubble: {
+    width: 22,
+    height: 18,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  chatDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFF',
+  },
+  // Check icon
+  checkIcon: {
+    width: 20,
+    height: 20,
+    borderWidth: 2.5,
+    borderRadius: 4,
+    position: 'relative',
+  },
+  checkLine1: {
+    position: 'absolute',
+    width: 6,
+    height: 2.5,
+    borderRadius: 1,
+    transform: [{ rotate: '45deg' }],
+    bottom: 4,
+    left: 1,
+  },
+  checkLine2: {
+    position: 'absolute',
+    width: 10,
+    height: 2.5,
+    borderRadius: 1,
+    transform: [{ rotate: '-45deg' }],
+    bottom: 5,
+    right: 0,
+  },
+  // Profile icon
+  profileIcon: {
+    width: 20,
+    height: 20,
+    borderWidth: 2.5,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  profileHead: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    position: 'absolute',
+    top: 3,
+  },
+  profileBody: {
+    width: 10,
+    height: 5,
+    borderRadius: 0,
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5,
+    position: 'absolute',
+    bottom: 2,
   },
   loadingScreen: {
     flex: 1,
