@@ -1,6 +1,15 @@
 # KiboMobile - Development Notes
 
-## Project Status (2026-05-24 03:24 UTC - 12 TEST SUITES, 240 TESTS, APK REBUILT)
+## Project Status (2026-05-24 04:24 UTC - 14 TEST SUITES, 279 TESTS, APK REBUILT)
+
+### ✅ Journal & Challenges Tests + Biometric Lock + Privacy Policy (2026-05-24 07:24 UTC)
+- **New tests**: `journal.test.ts` (19 tests) + `challenges.test.ts` (15 tests) = 34 new tests
+- **BiometricGate** in App.tsx: locks app behind biometric when `biometric_lock` enabled in AsyncStorage
+- **HowKiboWorksScreen**: 8 feature explanations with card layout
+- **PrivacyPolicyScreen**: Full LGPD-compliant privacy policy with 10 sections
+- **ProfileScreen**: Fixed placeholder links → navigate to new screens
+- **APK**: `kibo-latest.apk` (130.8MB, rebuilt 2026-05-24 04:36 UTC)
+- **TypeScript**: 0 errors | **Tests**: 14 suites, 279 passing, 5 skipped
 
 ### ✅ Linking Service Fixed & Security Rules Corrected (2026-05-23 18:30 UTC)
 - **linking.ts**: Moved auth check to TOP of `useTherapistCode` (before Firestore query)
