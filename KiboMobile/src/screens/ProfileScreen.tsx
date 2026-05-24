@@ -5,18 +5,20 @@ import { onAuthChange, getUserProfile, logout } from '../services/firebase';
 import { notificationService } from '../services/notifications';
 import { authenticateWithBiometrics, isBiometricAvailable } from '../services/biometric';
 import { getCheckinHistory, getMoodTrend } from '../services/checkins';
+import { enableSensors, disableSensors, areSensorsEnabled } from '../hooks/useSensorTracking';
 import { generateWeeklyInsights } from '../services/insights';
 import { useTherapistCode, getLinkedTherapist } from '../services/linking';
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }: { navigation: any }) {
   const [user, setUser] = useState<any>(null);
   const [notifications, setNotifications] = useState({
     dailyReminder: true,
     weeklyReport: true,
     emergencyContact: false,
   });
-  const [biometricLock, setBiometricLock] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [sensorEnabled, setSensorEnabled] = useState(true);
+  const [biometricLock, setBiometricLock] = useState(false);
   const [stats, setStats] = useState({
     checkins: 0,
     streak: 0,
@@ -44,6 +46,8 @@ export default function ProfileScreen() {
         // Check biometric availability
         const bioAvailable = await isBiometricAvailable();
         setBiometricAvailable(bioAvailable);
+        const sensorsOn = await areSensorsEnabled();
+        setSensorEnabled(sensorsOn);
 
         // Load biometric lock preference
         const lockPref = await AsyncStorage.getItem('biometric_lock');
@@ -271,6 +275,35 @@ Seus dados são confidenciais.
 
       {/* Settings */}
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Sensores</Text>
+
+        <View style={styles.settingItem}>
+          <View>
+            <Text style={styles.settingLabel}>Coleta de dados de movimento</Text>
+            <Text style={styles.settingDesc}>Acelerômetro e GPS para análise de atividade</Text>
+          </View>
+          <Switch
+            value={sensorEnabled}
+            onValueChange={async (v) => {
+              if (v) {
+                const result = await enableSensors();
+                if (result.success) {
+                  setSensorEnabled(true);
+                } else {
+                  Alert.alert('Erro', result.error || 'Não foi possível ativar os sensores.');
+                }
+              } else {
+                await disableSensors();
+                setSensorEnabled(false);
+              }
+            }}
+            trackColor={{ false: '#E5E7EB', true: '#A78BFA' }}
+            thumbColor={sensorEnabled ? '#7C3AED' : '#F3F4F6'}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Segurança</Text>
 
         <View style={styles.settingItem}>
@@ -465,15 +498,11 @@ Seus dados são confidenciais.
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Sobre</Text>
         
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HowKiboWorks')}>
           <Text style={styles.menuItemText}>ℹ️ Como funciona o Kibo</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.menuItem}>
-          <Text style={styles.menuItemText}>📋 Termos de uso</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('PrivacyPolicy')}>
           <Text style={styles.menuItemText}>🔒 Política de privacidade</Text>
         </TouchableOpacity>
       </View>

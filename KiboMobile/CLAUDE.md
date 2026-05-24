@@ -1,8 +1,23 @@
 # KiboMobile - Development Notes
 
-## Project Status (2026-05-23 08:30 UTC - 11 TEST SUITES, 229 TESTS, APK READY)
+## Project Status (2026-05-24 03:24 UTC - 12 TEST SUITES, 240 TESTS, APK REBUILT)
 
-### ✅ APK Rebuilt (2026-05-23 08:30 UTC)
+### ✅ Linking Service Fixed & Security Rules Corrected (2026-05-23 18:30 UTC)
+- **linking.ts**: Moved auth check to TOP of `useTherapistCode` (before Firestore query)
+- **linking.ts**: Changed to call `getAuth()` directly instead of using module-level auth import (fixes mock testing)
+- **linking.ts**: Removed `patients/{id}` creation + psychologist `patientIds` update (security rules violation)
+- **firestore.rules**: Fixed `linkingCodes` create rule to require `isPsychologist()` (was: `isAuthenticated()`)
+- **firestore.rules**: Fixed duplicate `allow update` in `users/{userId}` (psychologist rule was shadowing patient rule)
+- **firestore.rules**: Added `therapistId`/`therapistName` as allowed fields for patient self-update
+- **APK rebuilt**: `kibo-latest.apk` (66.2MB) - fresh build with all fixes
+- **Tests**: 11 linking tests, all passing. Full suite: 12 suites, 240 tests passing
+
+### Security Rules Note
+- `firestore.rules` updated but NOT auto-deployed (no firebase.json in project)
+- **Victor must manually update rules** in Firebase Console: https://console.firebase.google.com
+  → Project: kibo-b298c → Firestore Database → Rules tab → paste from `firestore.rules`
+
+### ✅ APK Rebuilt (2026-05-23 18:30 UTC)
 - Fresh release build: `kibo-latest.apk` (66.2MB, May 23 08:30 UTC)
 - Contains: `callKiboAPI` bug fix (empty API reply now properly falls back to local generation)
 - Contains: 8 new tests for `callKiboAPI` (total 229 tests, all passing)

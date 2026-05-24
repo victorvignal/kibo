@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useSensorTracking } from '../hooks/useSensorTracking';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Text, View, StyleSheet, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import HomeScreen from '../screens/HomeScreen';
 import ChatScreen from '../screens/ChatScreen';
@@ -18,6 +20,8 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import JournalScreen from '../screens/JournalScreen';
 import ActivityDataScreen from '../screens/ActivityDataScreen';
 import WearableDataScreen from '../screens/WearableDataScreen';
+import HowKiboWorksScreen from '../screens/HowKiboWorksScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import { onAuthChange } from '../services/firebase';
 
 const Tab = createBottomTabNavigator();
@@ -121,6 +125,8 @@ function MainTabs() {
 }
 
 function RootNavigator() {
+  // Start/stop sensor tracking based on auth state
+  useSensorTracking();
   const [initialRoute, setInitialRoute] = useState<'loading' | 'Onboarding' | 'Login' | 'Main'>('loading');
 
   useEffect(() => {
@@ -130,7 +136,6 @@ function RootNavigator() {
           setInitialRoute('Main');
         } else {
           try {
-            const AsyncStorage = require('@react-native-async-storage/async-storage').default;
             const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
             setInitialRoute(onboardingComplete === 'true' ? 'Login' : 'Onboarding');
           } catch {
@@ -177,6 +182,8 @@ function RootNavigator() {
         <Stack.Screen name="Crisis" component={CrisisScreen} />
         <Stack.Screen name="ActivityData" component={ActivityDataScreen} />
         <Stack.Screen name="WearableData" component={WearableDataScreen} />
+        <Stack.Screen name="HowKiboWorks" component={HowKiboWorksScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -4,6 +4,7 @@ import {
   FlatList, Animated, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -79,7 +80,6 @@ export default function OnboardingScreen() {
     // Mark onboarding as complete in local storage
     if (Platform.OS !== 'web') {
       try {
-        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
         AsyncStorage.setItem('onboarding_complete', 'true').catch(() => {});
       } catch {}
     }
