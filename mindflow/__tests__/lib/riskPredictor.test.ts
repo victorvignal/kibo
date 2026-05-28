@@ -6,6 +6,21 @@ import {
 } from '@/lib/riskPredictor';
 import type { DailyData } from '@/types';
 
+// Fixed reference date for deterministic test dates
+const REF_DATE = new Date('2026-05-24');
+
+/** Returns YYYY-MM-DD string for a date n days before REF_DATE (n=0 means today) */
+function daysAgoStr(n: number): string {
+  const d = new Date(REF_DATE);
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split('T')[0];
+}
+
+/** Returns last N days as YYYY-MM-DD strings, most recent first */
+function lastNDays(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => daysAgoStr(i)).reverse();
+}
+
 function makeDailyData(
   patientId: string,
   overrides: Partial<DailyData['features']> & { date: string }
@@ -62,7 +77,7 @@ describe('predictRisk', () => {
 
   it('returns low risk when all metrics are healthy', () => {
     const data = makeSet(
-      ['2026-05-14', '2026-05-15', '2026-05-16', '2026-05-17', '2026-05-18', '2026-05-19', '2026-05-20'],
+      lastNDays(7),
       patientId,
       {
         moodScore: 8,
@@ -201,7 +216,7 @@ describe('predictRisk', () => {
 
   it('includes protective factors when data is healthy', () => {
     const data = makeSet(
-      ['2026-05-14', '2026-05-15', '2026-05-16', '2026-05-17', '2026-05-18', '2026-05-19', '2026-05-20'],
+      lastNDays(7),
       patientId,
       {
         moodScore: 8,

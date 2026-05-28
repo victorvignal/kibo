@@ -100,25 +100,42 @@ Regras absoluta:
 
 /** Strip any thinking/reasoning content that leaked into the model response */
 function cleanResponse(text: string): string {
-  return text
-    // Remove thinking blocks (various formats)
+  // First, remove all known thinking block patterns entirely
+  let result = text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/\[Think\][\s\S]*?\[\/Think\]/gi, '')
     .replace(/Thinking:[\s\S]*?(?=\n\n|\n[A-Z]|$)/gi, '')
-    // Remove "Drafting P2 (Validation & Cat metaphor)*:" style prefixes
-    .replace(/Drafting P\d[^:]*:[^]*/gi, '')
-    .replace(/^Validation[^]*$/gm, '')
-    // Remove lines starting with P1, P2, etc (planning/thinking markers)
-    .replace(/^P\d+[^]*$/gm, '')
-    // Remove asterisk-wrapped reasoning
-    .replace(/\*Reasoning[^"]*?\*/gi, '')
-    // Clean up any remaining thought markers
-    .replace(/^\s*\[.*?\]\s*/gm, '')
+    .replace(/\*Reasoning[^}]*?\}/gi, '')
+    // Remove lines that are clearly internal validation/checking notes
+    .replace(/^\s*Validation[^\n]*$/gm, '')
+    // Remove paragraph-counting or self-referential debug lines
+    .replace(/^[^\n]*paragraph[^\n]*$/gim, '')
+    .replace(/^[^\n]*<=?\d+[^\n]*paragraph[^\n]*$/gim, '')
+    .replace(/^Drafting P\d[^\n]*$/gm, '')
+    .replace(/^P\d+[^\n]*$/gm, '')
+    // Remove lines that are just numbers/digits with no context
+    .replace(/^\s*\d+\s*$/gm, '')
+    // Clean any remaining thought markers
+    .replace(/^\s*\[.*?\]\s*$/gm, '')
+    // Remove asterisk-wrapped reasoning remnants
+    .replace(/\*[^\n]{0,200}?\*/g, (match) => {
+      // Keep if it looks like a real asterisk emphasis (short, no newlines)
+      if (match.length < 50 && !match.includes('\n')) return match;
+      return '';
+    })
     // Remove lines that are clearly internal notes
-    .replace(/^[^]*?(?:internal|reasoning|thinking|thought)[^]*$/gim, '')
+    .replace(/^[^\n]*(?:internal|reasoning|thinking|thought|self[-\s]?check)[^\n]*$/gim, '')
     // Collapse multiple blank lines
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  // If result is too short or empty after cleaning, return original
+  if (result.length < 10 && text.length > 10) {
+    return text;
+  }
+
+  return result;
 }
 
 export async function POST(request: NextRequest) {

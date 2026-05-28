@@ -51,7 +51,15 @@ describe('evaluatePatientRisk', () => {
   });
 
   it('returns empty array when all metrics are healthy', () => {
-    const data = makeSet(['2026-05-14', '2026-05-15', '2026-05-16', '2026-05-17', '2026-05-18', '2026-05-19', '2026-05-20'], patientId);
+    // Use the last 7 days from today to avoid triggering checkin_due alerts
+    const today = new Date();
+    const dates: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    const data = makeSet(dates, patientId);
     const result = evaluatePatientRisk(patientId, data);
     // Should not generate high severity alerts for healthy data
     const highAlerts = result.filter(a => a.severity === 'high');
@@ -168,7 +176,15 @@ describe('evaluatePatientRisk', () => {
   });
 
   it('returns empty for healthy data', () => {
-    const healthy = makeSet(['2026-05-14', '2026-05-15', '2026-05-16', '2026-05-17', '2026-05-18', '2026-05-19', '2026-05-20'], patientId, {
+    // Use the last 7 days from today to avoid triggering checkin_due alerts
+    const today = new Date();
+    const dates: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    const healthy = makeSet(dates, patientId, {
       moodScore: 8,
       anxietyScore: 2,
       sleepDuration: 7.5,
