@@ -1,100 +1,99 @@
-# KiboMobile
+# KiboMobile 🐱
 
-🐱 Expo app for Kibo mental wellness assistant — integrates with Firebase, collects sensor data, and provides AI-powered mental health check-ins.
+Mental wellness companion app — AI-powered check-ins, sensor tracking, crisis prevention, and chat with Kibo. Built with Expo + Firebase.
 
-## Status (2026-05-19)
+**Firebase project:** `kibo-b298c` (shared with [mindflow web app](https://mindflow-ruby.vercel.app))
 
-### ✅ Completed
-- Firebase Auth + Firestore (same project as mindflow web: `kibo-b298c`)
-- 6 screens: Login, Home, Chat, Checkin, Profile, Goals
-- Bottom tab + stack navigation
-- **Chat with context-aware Kibo AI** — pulls recent check-in history (mood, sleep, anxiety, social, streak, trend) for personalized responses
-- Multi-step check-in with sliders + history + 14-day trend chart
-- Weekly wellness insights (mood, sleep, anxiety, activity, social)
-- Goals screen with real streak tracking from Firestore
-- Sensor service: accelerometer, gyroscope, magnetometer, GPS (30s flush)
-- Daily notification reminders (expo-notifications)
-- Error boundaries + SafeScreen for crash resilience
-- `useAsync` hook for clean async state management
-- Firebase Cloud Functions scaffold ready (`functions/`) for AI deployment
+## Status (2026-05-25)
 
-### 📋 Build Instructions
+- ✅ 14 screens: Login, Home, Chat, Checkin, Profile, Goals, Insights, Journal, Crisis, BreathingExercise, ColorCheckin, Onboarding, ActivityData, WearableData, HowKiboWorks, PrivacyPolicy
+- ✅ Firebase Auth + Firestore
+- ✅ AI chat via mindflow API (`https://mindflow-ruby.vercel.app/api/chat`) + offline fallback
+- ✅ Sensors: accelerometer, gyroscope, magnetometer, GPS (30s flush to Firestore)
+- ✅ Offline-first: AsyncStorage queue + sync on reconnect
+- ✅ Biometric lock (Face ID / fingerprint)
+- ✅ Daily notification reminders + weekly reports
+- ✅ TypeScript: 0 errors | Tests: 14 suites, 274 passing
 
-**APK already exists** at: `android/app/build/outputs/apk/debug/app-debug.apk`
+## APK (Ready for Install)
 
-#### For development (with Metro bundler):
+**Latest build:** `kibo-latest.apk` (130.8 MB, built 2026-05-24)
+
+Transfer to Android phone and install. Enable "Install from unknown sources" in Settings > Security.
+
+## Screens
+
+| Screen | Description |
+|---|---|
+| Login / Register | Firebase Auth, role selection (patient/psychologist) |
+| Home | Dashboard with mood summary, streak, quick actions |
+| Chat | AI conversation with Kibo (context-aware, offline fallback) |
+| Checkin | 5-dimension slider check-in (mood, sleep, anxiety, activity, social) |
+| Insights | Weekly analytics + 14-day trend chart |
+| Goals | Streak tracking + daily goals |
+| Journal | Private journal entries synced to Firestore |
+| Crisis | Crisis resources + emergency contacts |
+| Breathing Exercise | Guided breathing with visual timer |
+| Color Checkin | Alternative color-based mood check-in |
+| Profile | User info, biometric lock toggle, therapist linking |
+| Activity Data | Sensor history and activity level |
+| How Kibo Works | Feature explanation |
+| Privacy Policy | LGPD-compliant data policy |
+
+## Tech Stack
+
+- Expo SDK 54 / React Native 0.81 / React 19
+- Firebase 12 (Auth + Firestore, project: `kibo-b298c`)
+- expo-sensors, expo-location, expo-notifications, expo-local-authentication
+- React Navigation 7 (bottom tabs + stack)
+- TypeScript ~5.9 (strict, 0 errors)
+
+## Install & Run
+
 ```bash
-npm start          # Start Expo + Metro
-# Then press 'a' for Android emulator or scan QR with Expo Go
+npm install
+npm start          # Expo + Metro (press 'a' for Android emulator)
+npm run android    # Expo + connected Android device
+npm test           # Jest test suite
 ```
 
-#### For standalone APK (needs Java):
-```bash
-# 1. Install Java 17+ (OpenJDK or Oracle JDK)
-java -version  # Verify Java is available
+## Build APK
 
-# 2. Build debug APK
+**Requires Java 17+** (not installed in this environment — APK pre-built above)
+
+```bash
 cd android && ./gradlew assembleDebug
-
-# 3. APK will be at:
-# android/app/build/outputs/apk/debug/app-debug.apk
+# APK: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-#### For EAS cloud build (no Java needed):
+**Or use EAS cloud build** (no Java needed):
 ```bash
 npm install -g eas-cli
 eas build --platform android --profile preview
-```
-
-#### For production release APK:
-```bash
-eas build --platform android --profile release
-```
-
-### 📦 Bundle JS (without building APK)
-```bash
-npx expo export --platform android
-# Bundle at dist/_expo/static/js/android/
-```
-
-## Cloud Functions Deployment
-
-Once Firebase billing is enabled (Blaze plan):
-
-```bash
-cd functions
-npm install
-firebase use kibo-b298c
-firebase functions:config:set minimax.api_key="your_key"
-firebase deploy --only functions
-```
-
-See `functions/README.md` for full instructions.
-
-## Running
-
-```bash
-npm install
-npm start          # Expo
-npm run android    # Expo + Android
-npm run ios        # Expo + iOS
 ```
 
 ## Firebase Collections
 
 | Collection | Description |
 |---|---|
-| `users/{uid}` | User profiles (name, email, role) |
-| `messages/{id}` | Chat messages (patientId, role, content) |
-| `checkins/{id}` | Check-in responses (mood, sleep, anxiety, activity, social) |
-| `sensorData/{id}` | Sensor batches (accelerometer, gyroscope, GPS) |
-| `patients/{id}` | Patient profiles (for therapist app) |
-| `alerts/{id}` | Auto-generated risk alerts |
+| `users/{uid}` | name, email, role, pushToken, therapistId |
+| `messages/{id}` | patientId, role, content, timestamp |
+| `checkins/{id}` | patientId, mood, sleep, anxiety, activity, social, timestamp |
+| `sensorData/{id}` | patientId, type, readings[], count, flushedAt, timestamp |
+| `journal/{id}` | userId, content, mood?, timestamp |
+| `goals/{id}` | patientId, text, completed, createdAt |
+| `notifications/{id}` | toUserId, title, body, read, createdAt |
+| `linkingCodes/{code}` | psychologistId, patientId?, used |
+| `patients/{id}` | therapistId, name, email, riskLevel |
+| `alerts/{id}` | patientId, type, severity, acknowledged |
 
-## Tech Stack
+## API
 
-- Expo SDK 54 / React Native 0.81
-- Firebase 12 (Auth + Firestore)
-- expo-sensors, expo-location, expo-notifications
-- React Navigation 7 (bottom tabs + stack)
-- TypeScript (strict mode, zero errors)
+Chat → `POST https://mindflow-ruby.vercel.app/api/chat`
+```json
+{ "message": "...", "context": { "avgMood": 7, "avgSleep": 7, "streak": 3 }, "history": [] }
+```
+
+## Offline Mode
+
+When no network is available, Kibo uses `generateLocalKiboResponse()` for chat — context-aware local response generation with risk detection. Sensor data and check-ins are queued in AsyncStorage and synced when connectivity returns.
