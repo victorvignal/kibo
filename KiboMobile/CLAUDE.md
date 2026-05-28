@@ -1,6 +1,11 @@
 # KiboMobile - Development Notes
 
-## Project Status (2026-05-24 04:24 UTC - 14 TEST SUITES, 279 TESTS, APK REBUILT)
+## Project Status (2026-05-28 01:17 UTC - APK REBUILT: kibo-latest.apk 69.4MB)
+
+### ✅ APK Rebuilt (2026-05-28)
+- `kibo-latest.apk` (69.4MB release build, bundled JS)
+- Built with mindflow riskPredictor fix (optional `now` parameter for deterministic tests)
+- APK location: `KiboMobile/kibo-latest.apk`
 
 ### ✅ Journal & Challenges Tests + Biometric Lock + Privacy Policy (2026-05-24 07:24 UTC)
 - **New tests**: `journal.test.ts` (19 tests) + `challenges.test.ts` (15 tests) = 34 new tests
