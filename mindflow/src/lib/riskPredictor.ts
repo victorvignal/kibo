@@ -48,7 +48,8 @@ const THRESHOLDS = {
 export function predictRisk(
   patientId: string,
   dailyData: DailyData[],
-  patient?: Partial<Patient>
+  patient?: Partial<Patient>,
+  now?: Date
 ): RiskPrediction {
   const riskFactors: RiskFactor[] = [];
   const protectiveFactors: ProtectiveFactor[] = [];
@@ -188,8 +189,9 @@ export function predictRisk(
 
   // Check-in gap risk
   const lastEntry = sorted[sorted.length - 1];
+  const currentTime = (now ?? new Date()).getTime();
   const daysSinceLastCheckin = Math.floor(
-    (Date.now() - new Date(lastEntry.date).getTime()) / 86400000
+    (currentTime - new Date(lastEntry.date).getTime()) / 86400000
   );
   if (daysSinceLastCheckin >= THRESHOLDS.checkinGap.medium) {
     riskFactors.push({

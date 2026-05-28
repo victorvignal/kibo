@@ -87,7 +87,7 @@ describe('predictRisk', () => {
         socialInteractionScore: 80,
       }
     );
-    const result = predictRisk(patientId, data);
+    const result = predictRisk(patientId, data, undefined, new Date(REF_DATE));
     expect(result.riskLevel).toBe('low');
     expect(result.riskFactors).toHaveLength(0);
     expect(result.protectiveFactors.length).toBeGreaterThan(0);
@@ -226,7 +226,7 @@ describe('predictRisk', () => {
         socialInteractionScore: 80,
       }
     );
-    const result = predictRisk(patientId, data);
+    const result = predictRisk(patientId, data, undefined, new Date(REF_DATE));
     expect(result.protectiveFactors.length).toBeGreaterThan(0);
     expect(result.riskFactors).toHaveLength(0);
   });
