@@ -1,13 +1,15 @@
 name: Release KUXY
 
-# Builda e publica nova versão do KUXY quando você der push em uma tag no formato vX.Y.Z
-# Ex: git tag v0.2.0 && git push origin v0.2.0
+# Builda e publica nova versão do KUXY quando você der push em uma tag
+# no formato kuxy-vX.Y.Z. O prefixo evita conflito com tags de outros
+# projetos no mesmo monorepo (KiboMobile, mindflow).
+# Ex: git tag kuxy-v0.2.0 && git push origin kuxy-v0.2.0
 # O projeto fica em kibo-habit/ dentro deste monorepo.
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'kuxy-v*'
   workflow_dispatch:
 
 permissions:
