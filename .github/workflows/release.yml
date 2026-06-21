@@ -1,0 +1,99 @@
+name: Release KUXY
+
+# Builda e publica nova versão do KUXY quando você der push em uma tag no formato vX.Y.Z
+# Ex: git tag v0.2.0 && git push origin v0.2.0
+# O projeto fica em kibo-habit/ dentro deste monorepo.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: kibo-habit
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: kibo-habit
+        run: npm run typecheck
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: kibo-habit
+        run: npm run build:win
+
+      - name: Build (macOS)
+        if: matrix.os == 'macos-latest'
+        working-directory: kibo-habit
+        run: npm run build:mac
+
+      - name: Build (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: kibo-habit
+        run: npm run build:linux
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuxy-${{ matrix.os }}
+          path: |
+            kibo-habit/release/**/*.exe
+            kibo-habit/release/**/*.dmg
+            kibo-habit/release/**/*.AppImage
+            kibo-habit/release/**/*.deb
+            kibo-habit/release/**/*.zip
+            kibo-habit/release/**/*.blockmap
+            kibo-habit/release/**/*.yml
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
+            artifacts/**/*.zip
+            artifacts/**/*.blockmap
+            artifacts/**/*.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
