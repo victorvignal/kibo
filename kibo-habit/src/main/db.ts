@@ -101,10 +101,10 @@ export async function getDb(): Promise<DrizzleDb> {
     rawDb.exec(`
       INSERT INTO profiles (name, slug, type, color, icon, sidebar_items, archived, created_at)
       VALUES
-        ('Pessoal', 'personal', 'personal', '#a855f7', 'user',
-         '["/","/habits","/routines","/calendar","/journal","/focus","/goals"]', 0, ${now}),
+        ('Pessoal', 'personal', 'personal', '#8b5cf6', 'user',
+         '["/","/habits","/routines","/calendar","/journal","/focus","/goals","/finance"]', 0, ${now}),
         ('Profissional', 'professional', 'professional', '#3b82f6', 'briefcase',
-         '["/","/habits","/stats","/journal","/focus","/goals"]', 0, ${now});
+         '["/","/habits","/stats","/journal","/focus","/goals","/finance"]', 0, ${now});
     `)
   }
 
@@ -176,7 +176,111 @@ export async function getDb(): Promise<DrizzleDb> {
 
     CREATE INDEX IF NOT EXISTS idx_completions_date ON completions(date);
     CREATE INDEX IF NOT EXISTS idx_focus_started ON focus_sessions(started_at);
+
+    -- Finance module (v0.3.0)
+    CREATE TABLE IF NOT EXISTS accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_id INTEGER NOT NULL DEFAULT 1 REFERENCES profiles(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'checking',
+      balance INTEGER NOT NULL DEFAULT 0,
+      currency TEXT NOT NULL DEFAULT 'BRL',
+      color TEXT NOT NULL DEFAULT '#8b5cf6',
+      icon TEXT NOT NULL DEFAULT 'wallet',
+      archived INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_id INTEGER NOT NULL DEFAULT 1 REFERENCES profiles(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      color TEXT NOT NULL DEFAULT '#8b5cf6',
+      icon TEXT NOT NULL DEFAULT 'circle',
+      archived INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_id INTEGER NOT NULL DEFAULT 1 REFERENCES profiles(id) ON DELETE CASCADE,
+      account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+      type TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      description TEXT NOT NULL,
+      date TEXT NOT NULL,
+      notes TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_id INTEGER NOT NULL DEFAULT 1 REFERENCES profiles(id) ON DELETE CASCADE,
+      account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+      category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+      name TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'BRL',
+      interval TEXT NOT NULL DEFAULT 'monthly',
+      next_billing TEXT NOT NULL,
+      active INTEGER NOT NULL DEFAULT 1,
+      notes TEXT,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+    CREATE INDEX IF NOT EXISTS idx_transactions_profile ON transactions(profile_id);
+    CREATE INDEX IF NOT EXISTS idx_accounts_profile ON accounts(profile_id);
+    CREATE INDEX IF NOT EXISTS idx_categories_profile ON categories(profile_id);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_profile ON subscriptions(profile_id);
   `)
+
+  // Seed default categories + a checking account per profile, caso a tabela
+  // esteja vazia. Sem isso o Finance começa vazio e o usuário teria que
+  // criar tudo na mão (ruim pra first-run UX).
+  const profilesList = rawDb.exec(`SELECT id, slug FROM profiles`)[0]
+  const profileRows = (profilesList?.values ?? []) as Array<[number, string]>
+  for (const [pid, slug] of profileRows) {
+    const catCount = rawDb.exec(`SELECT COUNT(*) as c FROM categories WHERE profile_id = ${pid}`)[0]
+    const c = (catCount?.values?.[0]?.[0] as number) ?? 0
+    if (!c) {
+      const now = Date.now()
+      const seeds = [
+        ['Salário', 'income', '#4ade80', 'briefcase'],
+        ['Freelance', 'income', '#22d3ee', 'laptop'],
+        ['Investimentos', 'income', '#a78bfa', 'trending-up'],
+        ['Moradia', 'expense', '#8b5cf6', 'home'],
+        ['Alimentação', 'expense', '#f87171', 'utensils'],
+        ['Transporte', 'expense', '#facc15', 'car'],
+        ['Saúde', 'expense', '#22d3ee', 'heart-pulse'],
+        ['Lazer', 'expense', '#c084fc', 'gamepad-2'],
+        ['Educação', 'expense', '#6d4ee0', 'book-open'],
+        ['Assinaturas', 'expense', '#a78bfa', 'repeat']
+      ]
+      for (const [name, type, color, icon] of seeds) {
+        rawDb.run(
+          `INSERT INTO categories (profile_id, name, type, color, icon, archived, created_at)
+           VALUES (?, ?, ?, ?, ?, 0, ?)`,
+          [pid, name, type, color, icon, now]
+        )
+      }
+    }
+    const accCount = rawDb.exec(`SELECT COUNT(*) as c FROM accounts WHERE profile_id = ${pid}`)[0]
+    const a = (accCount?.values?.[0]?.[0] as number) ?? 0
+    if (!a) {
+      const now = Date.now()
+      const isPersonal = slug === 'personal'
+      rawDb.run(
+        `INSERT INTO accounts (profile_id, name, type, balance, currency, color, icon, archived, created_at, updated_at)
+         VALUES (?, ?, ?, 0, 'BRL', ?, ?, 0, ?, ?)`,
+        [pid, isPersonal ? 'Conta corrente' : 'Conta PJ', 'checking', isPersonal ? '#8b5cf6' : '#3b82f6', 'wallet', now, now]
+      )
+    }
+  }
 
   // Migrations: renomeia workspace_id → profile_id nas tabelas que existirem
   // de um DB antigo. Como sqlite não tem RENAME COLUMN nativo, recriamos a

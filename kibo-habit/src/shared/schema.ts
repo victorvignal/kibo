@@ -127,6 +127,106 @@ export const focusSessions = sqliteTable('focus_sessions', {
   status: text('status').notNull().default('completed')
 })
 
+// ============================================================
+// FINANCE (módulo novo, v0.3.0)
+// ============================================================
+
+/**
+ * Contas financeiras. Cada transação e assinatura pertence a uma conta.
+ * Tipos suportados: 'checking' (corrente), 'savings' (poupança),
+ * 'credit' (cartão de crédito), 'investment' (investimento),
+ * 'cash' (dinheiro).
+ *
+ * `archived` permite esconder contas antigas sem perder histórico.
+ */
+export const accounts = sqliteTable('accounts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id')
+    .notNull()
+    .default(1)
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  type: text('type').notNull().default('checking'),
+  balance: integer('balance').notNull().default(0), // em centavos pra evitar float drift
+  currency: text('currency').notNull().default('BRL'),
+  color: text('color').notNull().default('#8b5cf6'),
+  icon: text('icon').notNull().default('wallet'),
+  archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+})
+
+/**
+ * Categorias com tipo (receita ou despesa) e cor. Seeds default são criados
+ * no db.ts caso a tabela esteja vazia pro perfil Pessoal.
+ */
+export const categories = sqliteTable('categories', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id')
+    .notNull()
+    .default(1)
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  type: text('type').notNull(), // 'income' ou 'expense'
+  color: text('color').notNull().default('#8b5cf6'),
+  icon: text('icon').notNull().default('circle'),
+  archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+})
+
+/**
+ * Transações financeiras. Amount em centavos (sempre positivo; o `type`
+ * define se é receita ou despesa).
+ *
+ * `date` é texto YYYY-MM-DD pra alinhar com journal_entries e facilitar
+ * agregação por dia sem ter que lidar com timezone.
+ */
+export const transactions = sqliteTable('transactions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id')
+    .notNull()
+    .default(1)
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  accountId: integer('account_id')
+    .notNull()
+    .references(() => accounts.id, { onDelete: 'cascade' }),
+  categoryId: integer('category_id')
+    .notNull()
+    .references(() => categories.id, { onDelete: 'restrict' }),
+  type: text('type').notNull(), // 'income' ou 'expense'
+  amount: integer('amount').notNull(), // centavos
+  description: text('description').notNull(),
+  date: text('date').notNull(), // YYYY-MM-DD
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+})
+
+/**
+ * Assinaturas/recorrências. Diferente de transaction: aqui é uma assinatura
+ * que se repete N vezes (Netflix mensal, Gym mensal, etc).
+ *
+ * `nextBilling` é a próxima data de cobrança. `active` controla se
+ * continua gerando提醒 ou não.
+ */
+export const subscriptions = sqliteTable('subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id')
+    .notNull()
+    .default(1)
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  accountId: integer('account_id').references(() => accounts.id, { onDelete: 'set null' }),
+  categoryId: integer('category_id').references(() => categories.id, { onDelete: 'set null' }),
+  name: text('name').notNull(),
+  amount: integer('amount').notNull(), // centavos
+  currency: text('currency').notNull().default('BRL'),
+  interval: text('interval').notNull().default('monthly'), // 'monthly' | 'yearly' | 'weekly'
+  nextBilling: text('next_billing').notNull(), // YYYY-MM-DD
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  notes: text('notes'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+})
+
 export type Profile = typeof profiles.$inferSelect
 export type NewProfile = typeof profiles.$inferInsert
 export type Habit = typeof habits.$inferSelect
@@ -139,6 +239,14 @@ export type JournalEntry = typeof journalEntries.$inferSelect
 export type NewJournalEntry = typeof journalEntries.$inferInsert
 export type FocusSession = typeof focusSessions.$inferSelect
 export type NewFocusSession = typeof focusSessions.$inferInsert
+export type Account = typeof accounts.$inferSelect
+export type NewAccount = typeof accounts.$inferInsert
+export type Category = typeof categories.$inferSelect
+export type NewCategory = typeof categories.$inferInsert
+export type Transaction = typeof transactions.$inferSelect
+export type NewTransaction = typeof transactions.$inferInsert
+export type Subscription = typeof subscriptions.$inferSelect
+export type NewSubscription = typeof subscriptions.$inferInsert
 
 /**
  * Itens disponíveis na sidebar. O path é a chave, e cada perfil diz
@@ -156,13 +264,34 @@ export const SIDEBAR_ITEMS = [
   '/stats',
   '/journal',
   '/focus',
-  '/goals'
+  '/goals',
+  '/finance'
 ] as const
 
 export type SidebarItem = (typeof SIDEBAR_ITEMS)[number]
 
 /** Defaults sensatos por tipo de perfil. Editáveis depois pelo usuário. */
 export const DEFAULT_SIDEBAR_ITEMS: Record<string, SidebarItem[]> = {
-  personal: ['/', '/habits', '/routines', '/calendar', '/journal', '/focus', '/goals'],
-  professional: ['/', '/habits', '/stats', '/journal', '/focus', '/goals']
+  personal: ['/', '/habits', '/routines', '/calendar', '/journal', '/focus', '/goals', '/finance'],
+  professional: ['/', '/habits', '/stats', '/journal', '/focus', '/goals', '/finance']
 }
+
+/**
+ * Categorias seed do módulo Finance. Criadas automaticamente no db.ts
+ * caso a tabela esteja vazia pro perfil ativo. Sem isso o usuário
+ * começaria com zero categorias e teria que criar tudo na mão.
+ */
+export const DEFAULT_CATEGORIES: Array<Pick<NewCategory, 'name' | 'type' | 'color' | 'icon'>> = [
+  // Receitas
+  { name: 'Salário', type: 'income', color: '#4ade80', icon: 'briefcase' },
+  { name: 'Freelance', type: 'income', color: '#22d3ee', icon: 'laptop' },
+  { name: 'Investimentos', type: 'income', color: '#a78bfa', icon: 'trending-up' },
+  // Despesas
+  { name: 'Moradia', type: 'expense', color: '#8b5cf6', icon: 'home' },
+  { name: 'Alimentação', type: 'expense', color: '#f87171', icon: 'utensils' },
+  { name: 'Transporte', type: 'expense', color: '#facc15', icon: 'car' },
+  { name: 'Saúde', type: 'expense', color: '#22d3ee', icon: 'heart-pulse' },
+  { name: 'Lazer', type: 'expense', color: '#c084fc', icon: 'gamepad-2' },
+  { name: 'Educação', type: 'expense', color: '#6d4ee0', icon: 'book-open' },
+  { name: 'Assinaturas', type: 'expense', color: '#a78bfa', icon: 'repeat' }
+]

@@ -70,3 +70,61 @@ export interface FocusSession {
   completedAt: number | Date | null
   status: 'running' | 'completed' | 'aborted'
 }
+
+// ============================================================
+// FINANCE (v0.3.0)
+// ============================================================
+
+export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'cash'
+
+export interface Account {
+  id: number
+  name: string
+  type: AccountType
+  balance: number // centavos
+  currency: string
+  color: string
+  icon: string
+  archived: boolean
+  createdAt: number | Date
+  updatedAt: number | Date
+}
+
+export interface Category {
+  id: number
+  name: string
+  type: 'income' | 'expense'
+  color: string
+  icon: string
+  archived: boolean
+  createdAt: number | Date
+}
+
+export interface Transaction {
+  id: number
+  accountId: number
+  categoryId: number
+  type: 'income' | 'expense'
+  amount: number // centavos (sempre positivo)
+  description: string
+  date: string // YYYY-MM-DD
+  notes: string | null
+  createdAt: number | Date
+  updatedAt: number | Date
+}
+
+export type SubscriptionInterval = 'monthly' | 'yearly' | 'weekly'
+
+export interface Subscription {
+  id: number
+  accountId: number | null
+  categoryId: number | null
+  name: string
+  amount: number // centavos
+  currency: string
+  interval: SubscriptionInterval
+  nextBilling: string // YYYY-MM-DD
+  active: boolean
+  notes: string | null
+  createdAt: number | Date
+}

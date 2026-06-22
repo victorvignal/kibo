@@ -39,10 +39,18 @@ export type Theme = {
     accent: string
     accentHover: string
     accentSoft: string // rgba/alpha pra fundos sutis
+    accentLight: string // tom claro do accent (pra gradient em chart)
+    accentDark: string // tom escuro do accent
     // status
     success: string
     danger: string
     warning: string
+    info: string
+    // chart palette (alinhada com template Tempo)
+    chartPrimary: string
+    chartSecondary: string
+    chartTertiary: string
+    chartQuaternary: string
     // misc
     scrim: string // fundo de modais
   }
@@ -66,35 +74,45 @@ export type Theme = {
   }
 }
 
-// Tema dark (default). É o que tá rodando agora no app.
+// Tema dark (default). Alinhado com o template Tempo (julho/2026):
+// - accent #8b5cf6 (era #a855f7) - mais clean, combina melhor com o template
+// - success/danger/warning alinhados pros tons usados no template
+// - chart palette adicionada pros gráficos do módulo Finance
 export const DARK: Theme = {
   name: 'dark',
   colors: {
-    bg: '#0a0a0f',
-    bgSubtle: '#101018',
-    bgCard: '#15151f',
-    bgHover: '#1c1c28',
-    border: '#22222f',
-    borderStrong: '#2d2d3d',
-    text: '#e7e7ee',
-    textMuted: '#8b8b9a',
+    bg: '#0a0a0b',
+    bgSubtle: '#0c0c0e',
+    bgCard: '#141416',
+    bgHover: '#161619',
+    border: '#1f1f22',
+    borderStrong: '#2a2a2e',
+    text: '#e8e8ea',
+    textMuted: '#86868d',
     textSubtle: '#5e5e6e',
-    accent: '#a855f7',
-    accentHover: '#9333ea',
-    accentSoft: 'rgba(168, 85, 247, 0.12)',
-    success: '#22c55e',
-    danger: '#ef4444',
-    warning: '#f59e0b',
+    accent: '#8b5cf6',
+    accentHover: '#7c3aed',
+    accentSoft: 'rgba(139, 92, 246, 0.12)',
+    accentLight: '#a78bfa',
+    accentDark: '#6d4ee0',
+    success: '#4ade80',
+    danger: '#f87171',
+    warning: '#facc15',
+    info: '#22d3ee',
+    chartPrimary: '#8b5cf6',
+    chartSecondary: '#a78bfa',
+    chartTertiary: '#6d4ee0',
+    chartQuaternary: '#4f4193',
     scrim: 'rgba(0, 0, 0, 0.6)'
   },
   radii: {
-    sm: '4px',
-    md: '8px',
+    sm: '6px',
+    md: '9px',
     lg: '12px',
-    xl: '16px'
+    xl: '14px'
   },
   spacing: {
-    sidebarWidth: '240px',
+    sidebarWidth: '260px',
     topbarHeight: '56px'
   },
   font: {
@@ -102,12 +120,12 @@ export const DARK: Theme = {
     mono: '"JetBrains Mono", ui-monospace, monospace'
   },
   shadow: {
-    card: '0 1px 0 0 rgba(255, 255, 255, 0.03) inset, 0 0 0 1px rgba(255, 255, 255, 0.04)',
-    pop: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06)'
+    card: '0 1px 0 0 rgba(255, 255, 255, 0.02) inset, 0 0 0 1px rgba(255, 255, 255, 0.04)',
+    pop: '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06)'
   }
 }
 
-// Tema light (placeholder — pronto pra trocar via ThemeProvider quando quiser)
+// Tema light — alinhado com a mesma paleta, em tons claros.
 export const LIGHT: Theme = {
   name: 'light',
   colors: {
@@ -120,12 +138,19 @@ export const LIGHT: Theme = {
     text: '#1a1a22',
     textMuted: '#6b6b78',
     textSubtle: '#9b9ba6',
-    accent: '#9333ea',
-    accentHover: '#7e22ce',
-    accentSoft: 'rgba(147, 51, 234, 0.10)',
+    accent: '#7c3aed',
+    accentHover: '#6d28d9',
+    accentSoft: 'rgba(124, 58, 237, 0.10)',
+    accentLight: '#a78bfa',
+    accentDark: '#5b21b6',
     success: '#16a34a',
     danger: '#dc2626',
     warning: '#d97706',
+    info: '#0891b2',
+    chartPrimary: '#7c3aed',
+    chartSecondary: '#a78bfa',
+    chartTertiary: '#5b21b6',
+    chartQuaternary: '#4c1d95',
     scrim: 'rgba(0, 0, 0, 0.35)'
   },
   radii: DARK.radii,

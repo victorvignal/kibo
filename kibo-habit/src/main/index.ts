@@ -385,6 +385,217 @@ function registerIpc(): void {
   ipcMain.handle('update:install', () => {
     quitAndInstall()
   })
+
+  // ============================================================
+  // FINANCE (v0.3.0)
+  // ============================================================
+
+  // --- Accounts ---
+  ipcMain.handle('accounts:list', (_e, params: { profileId?: number; includeArchived?: boolean } = {}) => {
+    const conds: any[] = []
+    if (params.profileId) conds.push(eq(schema.accounts.profileId, params.profileId))
+    if (!params.includeArchived) conds.push(eq(schema.accounts.archived, false))
+    const where = conds.length ? and(...conds) : undefined
+    return db.select().from(schema.accounts).where(where).orderBy(schema.accounts.name).all()
+  })
+
+  ipcMain.handle('accounts:create', async (_e, data: schema.NewAccount) => {
+    const result = db
+      .insert(schema.accounts)
+      .values({ ...data, createdAt: new Date(), updatedAt: new Date() })
+      .returning()
+      .get()
+    persistDb()
+    return result
+  })
+
+  ipcMain.handle('accounts:update', async (_e, id: number, data: Partial<schema.NewAccount>) => {
+    const result = db
+      .update(schema.accounts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.accounts.id, id))
+      .returning()
+      .get()
+    persistDb()
+    return result
+  })
+
+  ipcMain.handle('accounts:archive', async (_e, id: number, archived: boolean) => {
+    db.update(schema.accounts)
+      .set({ archived, updatedAt: new Date() })
+      .where(eq(schema.accounts.id, id))
+      .run()
+    persistDb()
+    return { ok: true }
+  })
+
+  // --- Categories ---
+  ipcMain.handle('categories:list', (_e, params: { profileId?: number; type?: 'income' | 'expense' } = {}) => {
+    const conds: any[] = []
+    if (params.profileId) conds.push(eq(schema.categories.profileId, params.profileId))
+    if (params.type) conds.push(eq(schema.categories.type, params.type))
+    conds.push(eq(schema.categories.archived, false))
+    return db.select().from(schema.categories).where(and(...conds)).orderBy(schema.categories.name).all()
+  })
+
+  ipcMain.handle('categories:create', async (_e, data: schema.NewCategory) => {
+    const result = db
+      .insert(schema.categories)
+      .values({ ...data, createdAt: new Date() })
+      .returning()
+      .get()
+    persistDb()
+    return result
+  })
+
+  // --- Transactions ---
+  ipcMain.handle('transactions:list', (_e, params: { profileId?: number; from?: string; to?: string; type?: 'income' | 'expense'; limit?: number } = {}) => {
+    const conds: any[] = []
+    if (params.profileId) conds.push(eq(schema.transactions.profileId, params.profileId))
+    if (params.from) conds.push(gte(schema.transactions.date, params.from))
+    if (params.to) conds.push(lte(schema.transactions.date, params.to))
+    if (params.type) conds.push(eq(schema.transactions.type, params.type))
+    const where = conds.length ? and(...conds) : undefined
+    return db
+      .select()
+      .from(schema.transactions)
+      .where(where)
+      .orderBy(desc(schema.transactions.date))
+      .limit(params.limit ?? 500)
+      .all()
+  })
+
+  ipcMain.handle('transactions:create', async (_e, data: schema.NewTransaction) => {
+    const result = db
+      .insert(schema.transactions)
+      .values({ ...data, createdAt: new Date(), updatedAt: new Date() })
+      .returning()
+      .get()
+    // Atualiza o saldo da conta: income soma, expense subtrai
+    const delta = data.type === 'income' ? data.amount : -data.amount
+    db.run(`UPDATE accounts SET balance = balance + (?), updated_at = ? WHERE id = ?`, [
+      delta,
+      Date.now(),
+      data.accountId
+    ])
+    persistDb()
+    return result
+  })
+
+  ipcMain.handle('transactions:update', async (_e, id: number, data: Partial<schema.NewTransaction>) => {
+    // Se mudou amount/type/accountId, ajustar saldo
+    if (data.amount !== undefined || data.type !== undefined || data.accountId !== undefined) {
+      const old = db.select().from(schema.transactions).where(eq(schema.transactions.id, id)).get()
+      if (old) {
+        // Reverte o efeito antigo
+        const revert = old.type === 'income' ? -old.amount : old.amount
+        db.run(`UPDATE accounts SET balance = balance + (?), updated_at = ? WHERE id = ?`, [
+          revert,
+          Date.now(),
+          old.accountId
+        ])
+        // Aplica o novo (se accountId não foi passado, mantém o mesmo)
+        const newType = data.type ?? old.type
+        const newAmount = data.amount ?? old.amount
+        const newAccountId = data.accountId ?? old.accountId
+        const apply = newType === 'income' ? newAmount : -newAmount
+        db.run(`UPDATE accounts SET balance = balance + (?), updated_at = ? WHERE id = ?`, [
+          apply,
+          Date.now(),
+          newAccountId
+        ])
+      }
+    }
+    const result = db
+      .update(schema.transactions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.transactions.id, id))
+      .returning()
+      .get()
+    persistDb()
+    return result
+  })
+
+  ipcMain.handle('transactions:delete', async (_e, id: number) => {
+    const t = db.select().from(schema.transactions).where(eq(schema.transactions.id, id)).get()
+    if (t) {
+      const revert = t.type === 'income' ? -t.amount : t.amount
+      db.run(`UPDATE accounts SET balance = balance + (?), updated_at = ? WHERE id = ?`, [
+        revert,
+        Date.now(),
+        t.accountId
+      ])
+    }
+    db.delete(schema.transactions).where(eq(schema.transactions.id, id)).run()
+    persistDb()
+    return { ok: true }
+  })
+
+  // Overview agregado pro dashboard financeiro
+  ipcMain.handle('finance:overview', (_e, params: { from: string; to: string; profileId?: number }) => {
+    const conds: any[] = [
+      gte(schema.transactions.date, params.from),
+      lte(schema.transactions.date, params.to)
+    ]
+    if (params.profileId) conds.push(eq(schema.transactions.profileId, params.profileId))
+
+    const txs = db.select().from(schema.transactions).where(and(...conds)).all()
+
+    let income = 0
+    let expense = 0
+    for (const t of txs) {
+      if (t.type === 'income') income += t.amount
+      else expense += t.amount
+    }
+
+    const accConds: any[] = [eq(schema.accounts.archived, false)]
+    if (params.profileId) accConds.push(eq(schema.accounts.profileId, params.profileId))
+    const accs = db.select().from(schema.accounts).where(and(...accConds)).all()
+    const totalBalance = accs.reduce((sum, a) => sum + a.balance, 0)
+
+    return {
+      income,
+      expense,
+      net: income - expense,
+      totalBalance,
+      transactionCount: txs.length
+    }
+  })
+
+  // --- Subscriptions ---
+  ipcMain.handle('subscriptions:list', (_e, params: { profileId?: number; activeOnly?: boolean } = {}) => {
+    const conds: any[] = []
+    if (params.profileId) conds.push(eq(schema.subscriptions.profileId, params.profileId))
+    if (params.activeOnly) conds.push(eq(schema.subscriptions.active, true))
+    return db.select().from(schema.subscriptions).where(conds.length ? and(...conds) : undefined).all()
+  })
+
+  ipcMain.handle('subscriptions:create', async (_e, data: schema.NewSubscription) => {
+    const result = db
+      .insert(schema.subscriptions)
+      .values({ ...data, createdAt: new Date() })
+      .returning()
+      .get()
+    persistDb()
+    return result
+  })
+
+  ipcMain.handle('subscriptions:update', async (_e, id: number, data: Partial<schema.NewSubscription>) => {
+    const result = db
+      .update(schema.subscriptions)
+      .set(data)
+      .where(eq(schema.subscriptions.id, id))
+      .returning()
+      .get()
+    persistDb()
+    return result
+  })
+
+  ipcMain.handle('subscriptions:delete', async (_e, id: number) => {
+    db.delete(schema.subscriptions).where(eq(schema.subscriptions.id, id)).run()
+    persistDb()
+    return { ok: true }
+  })
 }
 
 app.whenReady().then(async () => {

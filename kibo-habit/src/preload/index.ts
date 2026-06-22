@@ -1,6 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { NewHabit, NewRoutine, NewJournalEntry, NewFocusSession, NewProfile } from '../shared/schema'
+import type {
+  NewHabit,
+  NewRoutine,
+  NewJournalEntry,
+  NewFocusSession,
+  NewProfile,
+  NewAccount,
+  NewCategory,
+  NewTransaction,
+  NewSubscription
+} from '../shared/schema'
 
 const api = {
   profiles: {
@@ -75,6 +85,50 @@ const api = {
       ipcRenderer.on('update:status', listener)
       return () => ipcRenderer.removeListener('update:status', listener)
     }
+  },
+  finance: {
+    accounts: {
+      list: (params?: { profileId?: number; includeArchived?: boolean }) =>
+        ipcRenderer.invoke('accounts:list', params || {}) as Promise<any[]>,
+      create: (data: NewAccount) => ipcRenderer.invoke('accounts:create', data) as Promise<any>,
+      update: (id: number, data: Partial<NewAccount>) =>
+        ipcRenderer.invoke('accounts:update', id, data) as Promise<any>,
+      archive: (id: number, archived: boolean) =>
+        ipcRenderer.invoke('accounts:archive', id, archived) as Promise<{ ok: boolean }>
+    },
+    categories: {
+      list: (params?: { profileId?: number; type?: 'income' | 'expense' }) =>
+        ipcRenderer.invoke('categories:list', params || {}) as Promise<any[]>,
+      create: (data: NewCategory) => ipcRenderer.invoke('categories:create', data) as Promise<any>
+    },
+    transactions: {
+      list: (params?: { profileId?: number; from?: string; to?: string; type?: 'income' | 'expense'; limit?: number }) =>
+        ipcRenderer.invoke('transactions:list', params || {}) as Promise<any[]>,
+      create: (data: NewTransaction) =>
+        ipcRenderer.invoke('transactions:create', data) as Promise<any>,
+      update: (id: number, data: Partial<NewTransaction>) =>
+        ipcRenderer.invoke('transactions:update', id, data) as Promise<any>,
+      delete: (id: number) =>
+        ipcRenderer.invoke('transactions:delete', id) as Promise<{ ok: boolean }>
+    },
+    subscriptions: {
+      list: (params?: { profileId?: number; activeOnly?: boolean }) =>
+        ipcRenderer.invoke('subscriptions:list', params || {}) as Promise<any[]>,
+      create: (data: NewSubscription) =>
+        ipcRenderer.invoke('subscriptions:create', data) as Promise<any>,
+      update: (id: number, data: Partial<NewSubscription>) =>
+        ipcRenderer.invoke('subscriptions:update', id, data) as Promise<any>,
+      delete: (id: number) =>
+        ipcRenderer.invoke('subscriptions:delete', id) as Promise<{ ok: boolean }>
+    },
+    overview: (params: { from: string; to: string; profileId?: number }) =>
+      ipcRenderer.invoke('finance:overview', params) as Promise<{
+        income: number
+        expense: number
+        net: number
+        totalBalance: number
+        transactionCount: number
+      }>
   }
 }
 
