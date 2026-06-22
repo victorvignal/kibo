@@ -1,0 +1,17 @@
+# Dependências
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel metadata
+.vercel/
+
+# Builds locais
+public/
+
+# Scripts de teste locais (Firestore direto, dev only)
+test-firestore.cjs
+test-firestore2.cjs
+test-firestore.json

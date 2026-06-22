@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Test Sync · Quem Disse O Quê?</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; color: #4ade80; padding: 20px; max-width: 600px; margin: 0 auto; }
+    h1 { font-size: 18px; }
+    button { background: #4ade80; color: #0a0a0a; border: none; padding: 16px 24px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; margin-bottom: 12px; }
+    button:hover { background: #22c55e; }
+    pre { background: #000; color: #fff; padding: 16px; border-radius: 8px; font-size: 12px; overflow-x: auto; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+    .ok { color: #4ade80; }
+    .err { color: #ef4444; }
+    .info { color: #888; font-size: 13px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test Sync</h1>
+  <p class="info">Clica no botão. Se funcionar, tu vais ver "OK" + a versão incrementada no log abaixo. Abre essa página no celular E no PC e clica em cada um — os dois devem mostrar a mesma versão.</p>
+
+  <button id="btnGet">1. GET (ler estado atual)</button>
+  <button id="btnPatch">2. PATCH (incrementar versão)</button>
+  <button id="btnPoll">3. Toggle polling (1.5s)</button>
+
+  <pre id="log">aguardando ação...</pre>
+
+  <script src="data.js"></script>
+  <script>
+    const log = document.getElementById("log");
+    function append(msg, cls) {
+      const ts = new Date().toLocaleTimeString("pt-BR");
+      const line = document.createElement("div");
+      line.className = cls || "";
+      line.textContent = `[${ts}] ${msg}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+    function clearLog() { log.textContent = ""; }
+
+    document.getElementById("btnGet").addEventListener("click", async () => {
+      append("→ GET " + BASE_URL.slice(0, 70) + "...", "info");
+      try {
+        const r = await fetch(BASE_URL, { cache: "no-store" });
+        append(`  status: ${r.status} ${r.statusText}`, r.ok ? "ok" : "err");
+        if (r.ok) {
+          const d = await r.json();
+          append(`  versao atual: ${d.fields?.versao?.integerValue}`, "ok");
+          append(`  carta: ${d.fields?.cartaAtual?.mapValue ? "sim" : "null"}`, "ok");
+        } else {
+          const t = await r.text();
+          append(`  body: ${t.slice(0, 200)}`, "err");
+        }
+      } catch (e) {
+        append(`  ERRO fetch: ${e.message}`, "err");
+      }
+    });
+
+    document.getElementById("btnPatch").addEventListener("click", async () => {
+      append("→ PATCH...", "info");
+      try {
+        const novo = Object.assign({}, getEstado(), { versao: (getEstado().versao || 0) + 1 });
+        const body = JSON.stringify(toFirestore(novo));
+        append(`  body size: ${body.length} bytes`, "info");
+        const r = await fetch(BASE_URL, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: body
+        });
+        append(`  status: ${r.status} ${r.statusText}`, r.ok ? "ok" : "err");
+        if (r.ok) {
+          const d = await r.json();
+          append(`  nova versao: ${d.fields?.versao?.integerValue}`, "ok");
+        } else {
+          const t = await r.text();
+          append(`  body: ${t.slice(0, 200)}`, "err");
+        }
+      } catch (e) {
+        append(`  ERRO fetch: ${e.message}`, "err");
+      }
+    });
+
+    let polling = null;
+    document.getElementById("btnPoll").addEventListener("click", () => {
+      if (polling) {
+        clearInterval(polling);
+        polling = null;
+        append("polling PARADO", "info");
+      } else {
+        let lastV = null;
+        polling = setInterval(async () => {
+          try {
+            const r = await fetch(BASE_URL, { cache: "no-store" });
+            if (!r.ok) return;
+            const d = await r.json();
+            const v = parseInt(d.fields?.versao?.integerValue || "0", 10);
+            if (v !== lastV) {
+              append(`polling: versão mudou para ${v}`, "ok");
+              lastV = v;
+            }
+          } catch (e) {
+            append(`polling ERRO: ${e.message}`, "err");
+          }
+        }, 1500);
+        append("polling INICIADO (1.5s)", "info");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "quem-disse-o-que",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jogo Quem Disse O Quê? — trabalho de Pensamento e Linguagem G2 (PUC-Rio)",
+  "scripts": {
+    "build": "node build.js"
+  }
+}
