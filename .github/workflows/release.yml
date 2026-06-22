@@ -1,4 +1,4 @@
-name: Release KUXY
+﻿name: Release KUXY
 
 # Builda e publica nova versão do KUXY quando você der push em uma tag
 # no formato kuxy-vX.Y.Z. O prefixo evita conflito com tags de outros
@@ -140,4 +140,4 @@ jobs:
             artifacts/**/*.blockmap
             artifacts/**/*.yml
         env:
-          GITHUB_TOKEN: *** secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
