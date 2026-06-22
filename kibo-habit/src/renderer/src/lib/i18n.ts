@@ -210,7 +210,54 @@ const dicts: Record<Lang, Record<string, string>> = {
     'common.deleted_habit': 'Deleted habit',
     'common.value': 'Value',
     'common.count': 'Count',
-    'common.date': 'Date'
+    'common.date': 'Date',
+    // Finance module (v0.3.0)
+    'nav.finance': 'Finance',
+    'finance.title': 'Finance',
+    'finance.subtitle_personal': 'Track your money: accounts, transactions, subscriptions.',
+    'finance.subtitle_professional': 'Track revenue and expenses for your business.',
+    'finance.balance': 'Total balance',
+    'finance.income': 'Income',
+    'finance.expense': 'Expenses',
+    'finance.net': 'Net',
+    'finance.balance_flow': 'Balance flow',
+    'finance.balance_flow_hint': 'Daily net over the selected period',
+    'finance.spending_breakdown': 'Spending breakdown',
+    'finance.recent_transactions': 'Recent transactions',
+    'finance.no_transactions': 'No transactions yet',
+    'finance.add_transaction': 'Add transaction',
+    'finance.new_transaction': 'New transaction',
+    'finance.type': 'Type',
+    'finance.type.income': 'Income',
+    'finance.type.expense': 'Expense',
+    'finance.amount': 'Amount',
+    'finance.description': 'Description',
+    'finance.account': 'Account',
+    'finance.category': 'Category',
+    'finance.date': 'Date',
+    'finance.no_accounts': 'Create an account first',
+    'finance.no_categories': 'No categories available',
+    'finance.confirm_delete': 'Delete this transaction?',
+    'finance.this_month': 'This month',
+    'finance.last_30_days': 'Last 30 days',
+    'finance.subscriptions': 'Subscriptions',
+    'finance.subscriptions_total': 'Total monthly',
+    'finance.add_subscription': 'Add subscription',
+    'finance.next_billing': 'Next billing',
+    'finance.billing.monthly': 'Monthly',
+    'finance.billing.yearly': 'Yearly',
+    'finance.accounts': 'Accounts',
+    'finance.add_account': 'Add account',
+    'finance.account.checking': 'Checking',
+    'finance.account.savings': 'Savings',
+    'finance.account.credit': 'Credit',
+    'finance.account.investment': 'Investment',
+    'finance.account.cash': 'Cash',
+
+    // Dashboard tabs (bug fix)
+    'tab.overview': 'Overview',
+    'tab.today': 'Today',
+    'tab.insights': 'Insights'
   },
   'pt-BR': {
     'app.name': 'KUXY',
@@ -462,8 +509,7 @@ const dicts: Record<Lang, Record<string, string>> = {
     'finance.account.savings': 'Poupança',
     'finance.account.credit': 'Cartão de crédito',
     'finance.account.investment': 'Investimento',
-    'finance.account.cash': 'Dinheiro'
-  }
+    'finance.account.cash': 'Dinheiro'  }
 }
 
 interface LangState {
