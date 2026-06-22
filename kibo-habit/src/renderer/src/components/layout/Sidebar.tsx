@@ -9,13 +9,13 @@ import {
   Timer,
   Flag,
   Settings as SettingsIcon,
-  Zap,
   Search,
   Lightbulb
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useProfileStore } from '../../store/useProfile'
 import { useT } from '../../lib/i18n'
+import { ProfileSwitcher } from './ProfileSwitcher'
 
 const ITEM_ICONS: Record<string, any> = {
   '/': LayoutDashboard,
@@ -43,7 +43,7 @@ export function Sidebar() {
   const t = useT()
   const active = useProfileStore((s) => s.getActive())
 
-  // Itens permitidos pelo perfil ativo. Se não tem perfil carregado ainda,
+  // Itens permitidos pelo perfil ativo. Se nao tem perfil carregado ainda,
   // mostra a lista completa (vai piscar por ~50ms no primeiro load).
   const allowed = active?.sidebarItems ?? [
     '/',
@@ -58,11 +58,12 @@ export function Sidebar() {
 
   return (
     <aside className="w-sidebar shrink-0 border-r border-border bg-bg-subtle flex flex-col h-screen">
-      {/* Brand + Search */}
-      <div className="px-3 pt-4 pb-3">
-        <div className="flex items-start gap-2 px-2 mb-3">
-          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center mt-0.5">
-            <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
+      {/* Brand + Profile Switcher + Search */}
+      <div className="px-3 pt-4 pb-3 space-y-3">
+        {/* Brand */}
+        <div className="flex items-center gap-2 px-2">
+          <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center shrink-0">
+            <span className="text-white text-xs font-bold">K</span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold tracking-tight leading-tight">
@@ -73,6 +74,11 @@ export function Sidebar() {
             </div>
           </div>
         </div>
+
+        {/* Profile switcher (era no topbar, agora vive aqui) */}
+        <ProfileSwitcher />
+
+        {/* Search */}
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-text-subtle" />
           <input
@@ -87,7 +93,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Itens do perfil + bloco Geral */}
+      {/* Items do perfil + bloco Geral */}
       <div className="flex-1 px-3 overflow-y-auto space-y-3">
         <nav className="space-y-0.5">
           {allowed

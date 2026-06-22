@@ -79,6 +79,7 @@ export async function getDb(): Promise<DrizzleDb> {
       type TEXT NOT NULL DEFAULT 'personal',
       color TEXT NOT NULL DEFAULT '#a855f7',
       icon TEXT NOT NULL DEFAULT 'user',
+      description TEXT,
       sidebar_items TEXT NOT NULL DEFAULT '["/","/habits","/routines","/calendar","/stats","/journal","/focus","/goals"]',
       archived INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL
@@ -90,6 +91,7 @@ export async function getDb(): Promise<DrizzleDb> {
   // basta renomear a tabela e adicionar a coluna nova.
   safeExec(`ALTER TABLE workspaces RENAME TO profiles`)
   safeExec(`ALTER TABLE profiles ADD COLUMN sidebar_items TEXT NOT NULL DEFAULT '["/","/habits","/routines","/calendar","/stats","/journal","/focus","/goals"]'`)
+  safeExec(`ALTER TABLE profiles ADD COLUMN description TEXT`)
 
   // Seeds default — Pessoal (full sidebar) + Profissional (subset focado em produtividade)
   const profileCount = rawDb.exec(`SELECT COUNT(*) as c FROM profiles`)[0]

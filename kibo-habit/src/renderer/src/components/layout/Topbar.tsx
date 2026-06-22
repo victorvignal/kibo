@@ -3,7 +3,6 @@ import { Home, ChevronRight, Plus, Bell } from 'lucide-react'
 import { useState } from 'react'
 import { NewHabitDialog } from '../habits/NewHabitDialog'
 import { useT } from '../../lib/i18n'
-import { ProfileSwitcher } from './ProfileSwitcher'
 
 export function Topbar() {
   const location = useLocation()
@@ -26,15 +25,13 @@ export function Topbar() {
 
   return (
     <>
-      <header className="h-topbar border-b border-border bg-bg flex items-center pl-3 pr-6 gap-3 shrink-0">
-        {/* Profile switcher (top-left) */}
-        <ProfileSwitcher />
-
-        <div className="w-px h-6 bg-border mx-1" />
-
-        {/* Breadcrumb */}
+      <header className="h-topbar border-b border-border bg-bg flex items-center pl-6 pr-6 gap-3 shrink-0">
+        {/* Breadcrumb (profile switcher agora vive na Sidebar) */}
         <nav className="flex items-center gap-1.5 text-sm">
-          <Link to="/" className="text-text-muted hover:text-text transition-colors flex items-center gap-1">
+          <Link
+            to="/"
+            className="text-text-muted hover:text-text transition-colors flex items-center gap-1"
+          >
             <Home className="w-3.5 h-3.5" />
           </Link>
           <ChevronRight className="w-3 h-3 text-text-subtle" />

@@ -29,6 +29,7 @@ export const profiles = sqliteTable('profiles', {
   type: text('type').notNull().default('personal'),
   color: text('color').notNull().default('#a855f7'),
   icon: text('icon').notNull().default('user'),
+  description: text('description'),
   sidebarItems: text('sidebar_items').notNull().default('["/","/habits","/routines","/calendar","/stats","/journal","/focus","/goals"]'),
   archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())

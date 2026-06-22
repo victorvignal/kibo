@@ -7,6 +7,7 @@ export interface Profile {
   type: ProfileType
   color: string
   icon: string
+  description: string | null
   sidebarItems: string[] // paths permitidos na sidebar
   archived: boolean
   createdAt: number | Date
