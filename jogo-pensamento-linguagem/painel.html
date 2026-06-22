@@ -1,0 +1,665 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Operador · Quem Disse O Quê?</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .senha-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 15, 18, 0.96);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .senha-modal.escondido { display: none; }
+    .senha-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .senha-card h2 {
+      font-family: var(--font-display);
+      color: var(--accent);
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .senha-card p {
+      color: var(--text-dim);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .senha-card input {
+      text-align: center;
+      font-size: 20px;
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+    }
+    .senha-card .erro {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 10px;
+      min-height: 18px;
+    }
+    .painel-protegido.escondido { display: none; }
+
+    /* modal banco de cartas */
+    .banco-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .banco-modal.escondido { display: none; }
+    .banco-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .banco-fechar {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .banco-fechar:hover { color: var(--accent); border-color: var(--accent); }
+    .banco-lista { display: grid; gap: 10px; margin-top: 18px; }
+    .banco-item {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      color: var(--text);
+    }
+    .banco-item:hover { border-color: var(--accent); transform: translateX(2px); }
+    .banco-item .contexto { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .banco-item .frase { font-size: 14px; margin-bottom: 6px; font-style: italic; }
+    .banco-item .leitura { font-size: 12px; color: var(--text-dim); }
+    .banco-item .leitura strong { color: var(--accent); }
+
+    /* gabarito preview no painel */
+    .gabarito-preview {
+      background: var(--bg-elev);
+      border: 1px solid var(--accent);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
+    .gabarito-preview .label { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 6px; }
+    .gabarito-preview .principal { font-size: 15px; color: var(--text); margin-bottom: 8px; }
+    .gabarito-preview .alt { font-size: 13px; color: var(--text-dim); padding-top: 6px; border-top: 1px solid var(--border); }
+    .gabarito-preview.escondido { display: none; }
+
+    /* modal genérico (exemplo) */
+    .generic-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .generic-modal.escondido { display: none; }
+    .generic-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 620px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      color: var(--text);
+    }
+    .generic-fechar {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .generic-fechar:hover { color: var(--accent); border-color: var(--accent); }
+    .generic-card h2 { font-family: var(--font-display); color: var(--accent); font-size: 22px; margin-bottom: 4px; }
+    .generic-card .subtitulo { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; }
+    .regras-lista { list-style: none; counter-reset: regra; padding: 0; }
+    .regras-lista li {
+      counter-increment: regra;
+      padding: 8px 0 8px 36px;
+      position: relative;
+      line-height: 1.5;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .regras-lista li:last-child { border-bottom: none; }
+    .regras-lista li::before {
+      content: counter(regra);
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      color: var(--bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .exemplo-carta {
+      background: var(--bg-elev);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    .exemplo-carta .contexto { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .exemplo-carta .frase { font-size: 15px; font-style: italic; margin: 6px 0 4px; }
+    .exemplo-resposta { padding: 8px 12px; margin: 4px 0; border-radius: 6px; font-size: 14px; background: var(--bg); }
+    .exemplo-resposta.a { border-left: 3px solid var(--team-a, #3b82f6); }
+    .exemplo-resposta.b { border-left: 3px solid var(--team-b, #ef4444); }
+    .exemplo-resposta .label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 2px; }
+    .exemplo-resposta.a .label { color: var(--team-a, #3b82f6); }
+    .exemplo-resposta.b .label { color: var(--team-b, #ef4444); }
+    .exemplo-votos { display: flex; gap: 10px; margin: 12px 0; }
+    .exemplo-voto { flex: 1; text-align: center; padding: 10px; border-radius: 8px; font-size: 13px; }
+    .exemplo-voto.a { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--team-a, #3b82f6); }
+    .exemplo-voto.b { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--team-b, #ef4444); }
+    .exemplo-voto .num { font-size: 22px; font-weight: 700; }
+    .exemplo-voto.vencedor { background: rgba(74, 222, 128, 0.15); border-color: var(--accent); }
+    .exemplo-gabarito { background: rgba(74, 222, 128, 0.08); border: 1px solid var(--accent); border-radius: 8px; padding: 12px 14px; margin-top: 12px; }
+    .exemplo-gabarito .label { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; }
+    .exemplo-gabarito .principal { font-size: 15px; margin-bottom: 6px; }
+    .exemplo-gabarito .alt { font-size: 13px; color: var(--text-dim); }
+    .exemplo-vencedor { text-align: center; margin-top: 12px; font-size: 16px; color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body class="operador">
+  <div class="senha-modal" id="senhaModal">
+    <div class="senha-card">
+      <h2>🔒 Painel do Operador</h2>
+      <p>Digite a senha pra controlar o jogo</p>
+      <input type="password" id="senhaInput" placeholder="••••" autocomplete="off" />
+      <button id="btnEntrar" class="full">Entrar</button>
+      <div class="erro" id="senhaErro"></div>
+    </div>
+  </div>
+
+  <div class="painel-protegido escondido" id="painelProtegido">
+    <header class="bar">
+      <h1>
+        Operador
+        <small id="rodadaNum">Rodada 0</small>
+      </h1>
+      <div id="statusBadge" class="status espera">aguardando</div>
+    </header>
+
+    <div class="painel">
+      <h2>1. Sortear rodada</h2>
+      <div class="acoes">
+        <button id="btnSortear" class="full">🎲 Sortear nova carta</button>
+        <button id="btnAbrirBanco" class="secundario full" style="margin-top: 8px;">📚 Ver banco de cartas</button>
+      </div>
+      <div class="acoes" style="margin-top: 8px; display: flex; gap: 8px;">
+        
+        <button id="btnAbrirExemplo" class="secundario" style="flex: 1;">🎯 Exemplo</button>
+      </div>
+      <div class="info-card" id="cartaInfo" style="margin-top: 12px;">
+        Nenhuma carta sorteada ainda.
+      </div>
+    </div>
+
+    <div class="painel">
+      <h2>2. Respostas dos times</h2>
+      <div class="info-card" style="margin-bottom: 10px;">
+        Os times ditam a "leitura" do que a pessoa quis dizer de verdade.
+      </div>
+      <div class="campo">
+        <label for="respA" style="font-size:12px;color:var(--team-a);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">Time A · leitura</label>
+        <textarea id="respA" rows="2" placeholder="O Time A acha que a pessoa quis dizer..."></textarea>
+      </div>
+      <div class="campo">
+        <label for="respB" style="font-size:12px;color:var(--team-b);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">Time B · leitura</label>
+        <textarea id="respB" rows="2" placeholder="O Time B acha que a pessoa quis dizer..."></textarea>
+      </div>
+      <div class="linha-btns">
+        <button id="btnSalvarA" class="secundario">💾 salvar A</button>
+        <button id="btnSalvarB" class="secundario">💾 salvar B</button>
+      </div>
+    </div>
+
+    <div class="painel">
+      <h2>3. Votação da turma</h2>
+      <div class="info-card" style="margin-bottom: 10px;">
+        "Qual leitura é mais convincente?" (mão levantada)
+      </div>
+      <div class="linha-btns">
+        <button id="votoA" class="voto-btn a">+1 voto A</button>
+        <button id="votoB" class="voto-btn b">+1 voto B</button>
+      </div>
+      <div class="linha-btns" style="margin-top: 8px;">
+        <button id="votoAReset" class="voto-btn a" style="font-size:13px;padding:8px;">↺ zerar A</button>
+        <button id="votoBReset" class="voto-btn b" style="font-size:13px;padding:8px;">↺ zerar B</button>
+      </div>
+    </div>
+
+    <div class="painel">
+      <h2>4. Resultado</h2>
+      <div class="acoes">
+        <button id="btnRevelar" class="secundario">👁 Revelar leitura real</button>
+        <button id="btnPontuar" disabled>🏆 Pontuar rodada</button>
+        <button id="btnProxima" disabled class="full">➡️ Próxima rodada</button>
+      </div>
+      <div class="gabarito-preview escondido" id="gabaritoPreview">
+        <div class="label">🧠 Leitura mais provável</div>
+        <div class="principal" id="gabaritoPrincipal">—</div>
+        <div class="alt" id="gabaritoAlt"></div>
+      </div>
+    </div>
+
+    <div class="painel">
+      <h2>Placar</h2>
+      <div class="linha-btns">
+        <button id="placarMaisA" class="voto-btn a">+1 A</button>
+        <button id="placarMaisB" class="voto-btn b">+1 B</button>
+      </div>
+      <div class="linha-btns" style="margin-top:8px;">
+        <button id="placarZerar" class="perigo">↺ zerar placar</button>
+      </div>
+    </div>
+
+    <div class="painel">
+      <h2>🔄 Reiniciar jogo</h2>
+      <div class="info-card" style="margin-bottom: 10px;">
+        Zera rodada, placar, carta atual e respostas. Tudo volta pro estado inicial.
+      </div>
+      <button id="btnResetar" class="perigo full">🔄 Reiniciar jogo do zero</button>
+    </div>
+
+    <div class="painel">
+      <a class="btn secundario full" href="tela.html" target="_blank">🖥 abrir tela do projetor</a>
+      <button id="btnSair" class="perigo full" style="margin-top:8px;">🔓 sair (limpar senha)</button>
+    </div>
+  </div>
+
+  <!-- Modal de exemplo -->
+  <div class="generic-modal escondido" id="exemploModal">
+    <div class="generic-card">
+      <button class="generic-fechar" id="btnFecharExemplo" aria-label="Fechar">×</button>
+      <h2>🎯 Exemplo de rodada completa</h2>
+      <p class="subtitulo">Assim vai funcionar quando a rodada rodar pra valer.</p>
+
+      <div class="exemplo-carta">
+        <div class="contexto">Família · mãe · passivo-agressivo</div>
+        <div class="frase">"Mãe no telefone: Tá, mas você que sabe."</div>
+      </div>
+
+      <div class="exemplo-resposta a">
+        <div class="label">Time A · leitura</div>
+        "Ela concordou com o que eu decidi."
+      </div>
+      <div class="exemplo-resposta b">
+        <div class="label">Time B · leitura</div>
+        "Ela discorda, mas não quer brigar."
+      </div>
+
+      <div class="exemplo-votos">
+        <div class="exemplo-voto a">
+          <div class="num">8</div>
+          votos Time A
+        </div>
+        <div class="exemplo-voto b vencedor">
+          <div class="num">15</div>
+          votos Time B
+        </div>
+      </div>
+
+      <div class="exemplo-gabarito">
+        <div class="label">🧠 Leitura mais provável</div>
+        <div class="principal">"Discordo, mas não vou brigar (aceitação forçada)"</div>
+        <div class="alt">↪ <strong style="color: var(--text-dim);">Também plausível:</strong> "Tô te apoiando, vai lá"</div>
+      </div>
+
+      <div class="exemplo-vencedor">🏆 Time B ganhou a rodada!</div>
+    </div>
+  </div>
+
+  <!-- Modal do banco de cartas -->
+  <div class="banco-modal escondido" id="bancoModal">
+    <div class="banco-card">
+      <button class="banco-fechar" id="btnFecharBanco" aria-label="Fechar">×</button>
+      <h2 style="font-family: var(--font-display); color: var(--accent); font-size: 22px; margin-bottom: 4px;">📚 Banco de cartas</h2>
+      <p style="color: var(--text-dim); font-size: 13px;">Clica numa carta pra carregar ela direto na rodada atual.</p>
+      <div class="banco-lista" id="bancoLista"></div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const SENHA = "psi";
+
+    function tentarEntrar() {
+      const valor = $("senhaInput").value;
+      if (valor === SENHA) {
+        localStorage.setItem("jogo_senha_ok", "1");
+        $("senhaModal").classList.add("escondido");
+        $("painelProtegido").classList.remove("escondido");
+        $("senhaErro").textContent = "";
+        render();
+        $("senhaInput").value = "";
+      } else {
+        $("senhaErro").textContent = "Senha errada, tenta de novo.";
+        $("senhaInput").value = "";
+        $("senhaInput").focus();
+      }
+    }
+
+    function sair() {
+      localStorage.removeItem("jogo_senha_ok");
+      $("painelProtegido").classList.add("escondido");
+      $("senhaModal").classList.remove("escondido");
+      $("senhaInput").focus();
+    }
+
+    function checarSenhaSalva() {
+      if (localStorage.getItem("jogo_senha_ok") === "1") {
+        $("senhaModal").classList.add("escondido");
+        $("painelProtegido").classList.remove("escondido");
+        return true;
+      }
+      return false;
+    }
+
+    $("btnEntrar").addEventListener("click", tentarEntrar);
+    $("senhaInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") tentarEntrar();
+    });
+    $("btnSair").addEventListener("click", sair);
+
+    // ============ Lógica do jogo ============
+    function badge(texto, classe) {
+      $("statusBadge").textContent = texto;
+      $("statusBadge").className = `status ${classe}`;
+    }
+
+    function renderCarta(estado) {
+      $("rodadaNum").textContent = `Rodada ${estado.rodada}`;
+      if (!estado.cartaAtual) {
+        $("cartaInfo").innerHTML = "Nenhuma carta sorteada ainda.";
+        return;
+      }
+      const c = estado.cartaAtual;
+      $("cartaInfo").innerHTML = `
+        <strong style="color: var(--accent);">${c.contexto}</strong><br>
+        <span style="font-size: 13px; color: var(--text-dim);"><em>${c.psi}</em></span>
+        <br><br>
+        <span style="font-size: 18px; line-height: 1.4;">${c.frase}</span>
+      `;
+    }
+
+    function renderRespostas(estado) {
+      const a = $("respA");
+      const b = $("respB");
+      if (document.activeElement !== a) a.value = estado.respostas.a || "";
+      if (document.activeElement !== b) b.value = estado.respostas.b || "";
+    }
+
+    function renderBotoes(estado) {
+      $("btnSortear").disabled = false;
+      $("btnPontuar").disabled = !(estado.respostas.a && estado.respostas.b && !estado.gabaritoRevelado);
+      $("btnProxima").disabled = !estado.gabaritoRevelado;
+
+      if (!estado.cartaAtual) {
+        badge("aguardando", "espera");
+        return;
+      }
+      if (estado.gabaritoRevelado) {
+        badge("rodada fechada", "fechada");
+        return;
+      }
+      if (estado.respostas.a && estado.respostas.b) {
+        badge("votação aberta", "votacao");
+        return;
+      }
+      if (estado.rodadaIniciada) {
+        badge("rodada ativa", "ativa");
+        return;
+      }
+    }
+
+    function renderGabarito(estado) {
+      const el = $("gabaritoPreview");
+      if (!estado.gabaritoRevelado || !estado.cartaAtual) {
+        el.classList.add("escondido");
+        return;
+      }
+      el.classList.remove("escondido");
+      const c = estado.cartaAtual;
+      $("gabaritoPrincipal").textContent = c.leituraReal;
+      if (c.alternativas && c.alternativas.length > 0) {
+        $("gabaritoAlt").innerHTML = `<strong style="color: var(--text-dim);">Também plausível:</strong> ${c.alternativas[0]}`;
+      } else {
+        $("gabaritoAlt").innerHTML = "";
+      }
+    }
+
+    function render() {
+      if ($("senhaModal").classList.contains("escondido")) {
+        const estado = getEstado();
+        renderCarta(estado);
+        renderRespostas(estado);
+        renderBotoes(estado);
+        renderGabarito(estado);
+      }
+    }
+
+    function salvarTextoA() {
+      const estado = getEstado();
+      setEstado({ respostas: { a: $("respA").value.trim(), b: estado.respostas.b } });
+    }
+    function salvarTextoB() {
+      const estado = getEstado();
+      setEstado({ respostas: { a: estado.respostas.a, b: $("respB").value.trim() } });
+    }
+
+    function sortear() {
+      const estado = getEstado();
+      setEstado({
+        rodada: estado.rodada + 1,
+        cartaAtual: sortearCarta(),
+        respostas: { a: "", b: "" },
+        votos: { a: 0, b: 0 },
+        rodadaIniciada: true,
+        gabaritoRevelado: false
+      });
+    }
+
+    function votoA() {
+      const estado = getEstado();
+      setEstado({ votos: { a: estado.votos.a + 1, b: estado.votos.b } });
+    }
+    function votoB() {
+      const estado = getEstado();
+      setEstado({ votos: { a: estado.votos.a, b: estado.votos.b + 1 } });
+    }
+    function votoAReset() {
+      const estado = getEstado();
+      setEstado({ votos: { a: 0, b: estado.votos.b } });
+    }
+    function votoBReset() {
+      const estado = getEstado();
+      setEstado({ votos: { a: estado.votos.a, b: 0 } });
+    }
+
+    function revelar() {
+      setEstado({ gabaritoRevelado: true });
+    }
+
+    function pontuar() {
+      const estado = getEstado();
+      let novoPlacar = Object.assign({}, estado.placar);
+      if (estado.votos.a > estado.votos.b) novoPlacar.a += 1;
+      else if (estado.votos.b > estado.votos.a) novoPlacar.b += 1;
+      setEstado({ placar: novoPlacar });
+    }
+
+    function proxima() {
+      sortear();
+    }
+
+    function placarMaisA() {
+      const estado = getEstado();
+      setEstado({ placar: { a: estado.placar.a + 1, b: estado.placar.b } });
+    }
+    function placarMaisB() {
+      const estado = getEstado();
+      setEstado({ placar: { a: estado.placar.a, b: estado.placar.b + 1 } });
+    }
+    function placarZerar() {
+      if (!confirm("Zerar o placar?")) return;
+      setEstado({ placar: { a: 0, b: 0 } });
+    }
+
+    // ============ Banco de cartas ============
+    function abrirBanco() {
+      renderBanco();
+      $("bancoModal").classList.remove("escondido");
+    }
+    function fecharBanco() {
+      $("bancoModal").classList.add("escondido");
+    }
+    function renderBanco() {
+      const lista = $("bancoLista");
+      lista.innerHTML = "";
+      window.CARTAS.forEach((c, i) => {
+        const div = document.createElement("button");
+        div.className = "banco-item";
+        div.type = "button";
+        const alt = (c.alternativas && c.alternativas[0]) ? c.alternativas[0] : "";
+        div.innerHTML = `
+          <div class="contexto">${i + 1}. ${c.contexto}</div>
+          <div class="frase">"${c.frase}"</div>
+          <div class="leitura"><strong>📌 Leitura:</strong> ${c.leituraReal}</div>
+          ${alt ? `<div class="leitura" style="margin-top: 3px;"><strong>↪ Alternativa:</strong> ${alt}</div>` : ""}
+        `;
+        div.addEventListener("click", () => carregarCarta(c));
+        lista.appendChild(div);
+      });
+    }
+    function carregarCarta(c) {
+      if (!confirm("Carregar essa carta na rodada atual? Substitui qualquer carta em jogo.")) return;
+      const estado = getEstado();
+      setEstado({
+        rodada: Math.max(estado.rodada, 1),
+        cartaAtual: c,
+        respostas: { a: "", b: "" },
+        votos: { a: 0, b: 0 },
+        rodadaIniciada: true,
+        gabaritoRevelado: false
+      });
+      fecharBanco();
+    }
+
+    // ============ Reset total ============
+    function reiniciarJogo() {
+      if (!confirm("Reiniciar o jogo do zero? Zera placar, rodada, carta e respostas. Não dá pra desfazer.")) return;
+      setEstado({
+        rodada: 0,
+        cartaAtual: null,
+        respostas: { a: "", b: "" },
+        votos: { a: 0, b: 0 },
+        placar: { a: 0, b: 0 },
+        rodadaIniciada: false,
+        gabaritoRevelado: false
+      });
+    }
+
+    // ============ Exemplo ============
+    function abrirExemplo() { $("exemploModal").classList.remove("escondido"); }
+    function fecharExemplo() { $("exemploModal").classList.add("escondido"); }
+
+    $("btnSortear").addEventListener("click", sortear);
+    $("btnAbrirBanco").addEventListener("click", abrirBanco);
+    $("btnFecharBanco").addEventListener("click", fecharBanco);
+    $("btnAbrirExemplo").addEventListener("click", abrirExemplo);
+    $("btnFecharExemplo").addEventListener("click", fecharExemplo);
+    $("btnSalvarA").addEventListener("click", salvarTextoA);
+    $("btnSalvarB").addEventListener("click", salvarTextoB);
+    $("votoA").addEventListener("click", votoA);
+    $("votoB").addEventListener("click", votoB);
+    $("votoAReset").addEventListener("click", votoAReset);
+    $("votoBReset").addEventListener("click", votoBReset);
+    $("btnRevelar").addEventListener("click", revelar);
+    $("btnPontuar").addEventListener("click", pontuar);
+    $("btnProxima").addEventListener("click", proxima);
+    $("placarMaisA").addEventListener("click", placarMaisA);
+    $("placarMaisB").addEventListener("click", placarMaisB);
+    $("placarZerar").addEventListener("click", placarZerar);
+    $("btnResetar").addEventListener("click", reiniciarJogo);
+
+    // fecha os modais com ESC
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      
+      else if (!$("exemploModal").classList.contains("escondido")) fecharExemplo();
+      else if (!$("bancoModal").classList.contains("escondido")) fecharBanco();
+    });
+
+    // inicializa
+    iniciarPolling();
+    onEstadoChange(render);
+  </script>
+</body>
+</html>
